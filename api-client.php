@@ -1,9 +1,4 @@
 <?php
-/*
-VistaPanel Users API library by @mariolatiffathy
-v1.0
-Tested on PHP 5.6 and 7.0
-*/
 error_reporting(E_ERROR | E_PARSE);
 class vistapanelApi
 {
