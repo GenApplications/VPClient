@@ -126,6 +126,28 @@ class vistapanelApi
         ));
         return true;
     }
+    function uploadCert($domainname,$key,$csr)
+    {
+        $this->CheckCpanelUrl();
+        $this->CheckLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required."),
+            
+        }
+        if (empty($key)) {
+            $this->classError("key is required."),
+            
+        }
+        $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
+            "domain_name" => $domainname,
+            "csr" => $csr
+            "key" => $key
+            
+        ), false, array(
+            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+        ));
+        return true;
+    }
     
     function listDatabases()
     {
@@ -297,36 +319,7 @@ class vistapanelApi
         return $subDomains;
     }
     
-    function SetPhpVersion($domain, $newversion)
-    {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        if (empty($domain)) {
-            $this->classError("domain is required.");
-        }
-        if (empty($newversion)) {
-            $this->classError("newversion is required.");
-        }
-        if (!array_key_exists($domain, $this->listAddonDomains()) && !array_key_exists($domain, $this->listSubDomains())) {
-            $this->classError("The domain/subdomain you're trying to change the PHP version of doesn't exists.");
-        }
-        if (!in_array($newversion, array(
-            "54",
-            "55",
-            "56",
-            "70"
-        ))) {
-            $this->classError("Invalid newversion, please read the documentation for the possible new versions.");
-        }
-        $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=phpselectversion_change", true, array(
-            "version" => $newversion,
-            "domain_name" => $domain
-        ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        return true;
-    }
-    
+
     function GetSoftaculousLink()
     {
         $this->CheckCpanelUrl();
@@ -340,61 +333,7 @@ class vistapanelApi
         return $location;
     }
     
-    function GetWebmailLink()
-    {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        return "http://185.27.132.238/roundcubemail/";
-    }
-    
-    function listEmailAccounts()
-    {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        $emailaccounts = array();
-        $htmlContent   = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=emailaccounts&ttt=" . $this->vistapanel_token, false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        $dom           = new DOMDocument;
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($htmlContent);
-        libxml_clear_errors();
-        $links = $dom->getElementsByTagName('a');
-        foreach ($links as $link) {
-            if (strpos($link->getAttribute('href'), "modules-new/emailaccounts/del.php?email=") !== false) {
-                $emailaccounts[substr($link->getAttribute('href'), strpos($link->getAttribute('href'), "=") + 1)] = true;
-            }
-        }
-        return $emailaccounts;
-    }
-    
-    function createEmailAccount($email = "", $domain = "", $password = "")
-    {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        if (empty($email)) {
-            $this->classError("email is required.");
-        }
-        if (empty($domain)) {
-            $this->classError("domain is required.");
-        }
-        if (empty($password) || strlen($password) < 8) {
-            $this->classError("password is required and must be greater than or equal to 8 characters.");
-        }
-        if (!array_key_exists($domain, $this->listAddonDomains())) {
-            $this->classError("The domain $domain doesn't exists.");
-        }
-        $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/emailaccounts/add.php", true, array(
-            "email" => $email,
-            "d_name" => $domain,
-            "password" => $password,
-            "B1" => "Add"
-        ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        return true;
-    }
-    
+ 
     function Logout()
     {
         $this->CheckCpanelUrl();
