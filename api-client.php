@@ -140,7 +140,7 @@ class vistapanelApi
         }
         $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
             "domain_name" => $domainname,
-            "csr" => $csr
+            "csr" => $csr,
             "key" => $key
             
         ), false, array(
