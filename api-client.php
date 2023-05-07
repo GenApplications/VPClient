@@ -126,6 +126,43 @@ class vistapanelApi
         ));
         return true;
     }
+    function changePackage($username, $newPackage)
+{
+    // Check for required parameters
+    if (empty($username)) {
+        throw new Exception("Username is required.");
+    }
+    if (empty($newPackage)) {
+        throw new Exception("New package name is required.");
+    }
+
+    // Construct API request
+    $url = "https://panel.myownfreehost.net/xml-api/changepackage.php";
+    $data = array(
+        "user" => $username,
+        "pkg" => $newPackage
+    );
+    $options = array(
+        CURLOPT_USERPWD => "your_username:your_password", // Replace with your actual username and password
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($data),
+        CURLOPT_RETURNTRANSFER => true
+    );
+
+    // Send API request and parse response
+    $curl = curl_init($url);
+    curl_setopt_array($curl, $options);
+    $response = curl_exec($curl);
+    curl_close($curl);
+
+    $xml = simplexml_load_string($response);
+    if ($xml->result->status == 1) {
+        return true;
+    } else {
+        throw new Exception("Package change failed: " . $xml->result->statusmsg);
+    }
+}
+
     function uploadCert($domainname,$key,$csr)
     {
         $this->CheckCpanelUrl();
