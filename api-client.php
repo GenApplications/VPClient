@@ -235,8 +235,7 @@ class vistapanelApi
             $this->classError("The database you're trying to remove doesn't exists.");
         }
         $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=mysql&cmd=remove", true, array(
-            //"toremove" => $this->accountUsername . "_" . $database,
-            "toremove" => $database,
+            "toremove" => $this->accountUsername . "_" . $database,
             "Submit2" => "Remove Database"
         ), false, array(
             "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
