@@ -168,11 +168,11 @@ class vistapanelApi
         $this->CheckCpanelUrl();
         $this->CheckLogin();
         if (empty($domainname)) {
-            $this->classError("domainname is required."),
+            $this->classError("domainname is required.");
             
         }
         if (empty($key)) {
-            $this->classError("key is required."),
+            $this->classError("key is required.");
             
         }
         $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
@@ -230,11 +230,13 @@ class vistapanelApi
         if (empty($database)) {
             $this->classError("database is required.");
         }
-        if (!array_key_exists($database, $this->listDatabases())) {
+      //  if (!array_key_exists($database, $this->listDatabases())) {
+        if (!in_array($database, $this->listDatabases())) {
             $this->classError("The database you're trying to remove doesn't exists.");
         }
         $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=mysql&cmd=remove", true, array(
-            "toremove" => $this->accountUsername . "_" . $database,
+            //"toremove" => $this->accountUsername . "_" . $database,
+            "toremove" => $database,
             "Submit2" => "Remove Database"
         ), false, array(
             "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
