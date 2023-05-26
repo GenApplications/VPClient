@@ -1,5 +1,6 @@
 # VPClient
 ![VPClient](vpclient.png)
+
 A VistaPanel API client in PHP.
 
 VistaPanel is a web hosting control panel that allows users to manage their websites, email accounts, databases, and other aspects of their hosting environment.  
