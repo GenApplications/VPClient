@@ -163,7 +163,7 @@ class vistapanelApi
     }
 }
 
-    function uploadCert($domainname,$key,$csr)
+    function uploadKey($domainname,$key,$csr)
     {
         $this->CheckCpanelUrl();
         $this->CheckLogin();
@@ -185,7 +185,27 @@ class vistapanelApi
         ));
         return true;
     }
-    
+        function uploadCert($domainname,$cert)
+    {
+        $this->CheckCpanelUrl();
+        $this->CheckLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+            
+        }
+        if (empty($cert)) {
+            $this->classError("cert is required.");
+            
+        }
+        $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
+            "domain_name" => $domainname,
+            "cert" => $cert
+            
+        ), false, array(
+            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+        ));
+        return true;
+    }
     function listDatabases()
     {
         $this->CheckCpanelUrl();
