@@ -301,12 +301,29 @@ class VistapanelApi
         return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
     }
     
-    public function listAddonDomains()
+    public function listDomains($option = "addon")
     {
+        /* Parses the domain table and returns all domains in a category.
+         * Available options: "addon", "sub" and "parked". Returns addon domains if no parameter is passed.
+         */
         $this->checkLogin();
-        $addonDomains = array();
+        switch ($option) {
+            case "sub":
+                $option = "subdomains";
+                $id = "subdomaintbl";
+                break;
+            case "parked":
+                $option = "parked";
+                $id = "parkeddomaintbl";
+                break;
+            default:
+                $option = "domains";
+                $id = "subdomaintbl";
+                break;
+        }
+        $domains = array();
         $htmlContent  = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=domains&ttt=" . $this->vistapanelToken,
+            $this->cpanelUrl . "/panel/indexpl.php?option={$option}&ttt=" . $this->vistapanelToken,
             false,
             array(),
             false,
@@ -318,8 +335,8 @@ class VistapanelApi
         libxml_use_internal_errors(true);
         $dom->loadHTML($htmlContent);
         libxml_clear_errors();
-        $header = $dom->getElementsByTagName('th');
-        $detail = $dom->getElementsByTagName('td');
+        $header = $dom->getElementById($id)->getElementsByTagName('th');
+        $detail = $dom->getElementById($id)->getElementsByTagName('td');
         foreach ($header as $nodeHeader) {
             $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
@@ -337,56 +354,12 @@ class VistapanelApi
         }
         $aDataTableDetailHTML = $aTempData;
         unset($aTempData);
-        foreach ($aDataTableDetailHTML as $addonDomain) {
-            $addonDomains[array_shift($addonDomain)] = true;
+        foreach ($aDataTableDetailHTML as $domain) {
+            $domains[array_shift($domain)] = true;
         }
-        return $addonDomains;
+        return $domains;
     }
     
-    public function listSubDomains()
-    {
-        $this->checkLogin();
-        $subDomains  = array();
-        $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=subdomains&ttt=" . $this->vistapanelToken,
-            false,
-            array(),
-            false,
-            array(
-                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
-            )
-        );
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($htmlContent);
-        libxml_clear_errors();
-        $header = $dom->getElementsByTagName('th');
-        $detail = $dom->getElementsByTagName('td');
-        foreach ($header as $nodeHeader) {
-            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
-        }
-        $i = 0;
-        $j = 0;
-        foreach ($detail as $sNodeDetail) {
-            $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
-            $i                          = $i + 1;
-            $j                          = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
-        }
-        for ($i = 0; $i < count($aDataTableDetailHTML); $i++) {
-            for ($j = 0; $j < count($aDataTableHeaderHTML); $j++) {
-                $aTempData[$i][$aDataTableHeaderHTML[$j]] = $aDataTableDetailHTML[$i][$j];
-            }
-        }
-        $aDataTableDetailHTML = $aTempData;
-        unset($aTempData);
-        foreach ($aDataTableDetailHTML as $subDomain) {
-            $subDomains[array_shift($subDomain)] = true;
-        }
-        unset($subDomains[current(array_keys($subDomains))]);
-        return $subDomains;
-    }
-    
-
     public function getSoftaculousLink()
     {
         $this->checkLogin();
@@ -406,7 +379,6 @@ class VistapanelApi
         return $location;
     }
     
- 
     public function logout()
     {
         $this->checkLogin();
