@@ -1,16 +1,20 @@
 <?php
+/*
+VistaPanel Users API library
+Originally by @oddmario, maintained by @GenerateApps
+*/
 error_reporting(E_ERROR | E_PARSE);
-class vistapanelApi
+class VistapanelApi
 {
     
-    public $cpanel_url = "";
-    public $loggedin = false;
-    public $vistapanel_session = "";
-    public $vistapanel_sessionName = "PHPSESSID";
-    public $vistapanel_token = 0;
+    public $cpanelUrl = "";
+    public $loggedIn = false;
+    public $vistapanelSession = "";
+    public $vistapanelSessionName = "PHPSESSID";
+    public $vistapanelToken = 0;
     public $accountUsername = "";
     
-    function getLineWithString($content, $str)
+    public function getLineWithString($content, $str)
     {
         $lines = explode("\n", $content);
         foreach ($lines as $lineNumber => $line) {
@@ -20,59 +24,74 @@ class vistapanelApi
         }
         return -1;
     }
-    function SimpleCurl($url = "", $post = false, $postfields = array(), $header = false, $httpheader = array(), $followlocation = false)
+
+    public function simpleCurl(
+        $url = "",
+        $post = false,
+        $postfields = array(),
+        $header = false,
+        $httpheader = array(),
+        $followlocation = false
+    )
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        if ($post == true) {
+        if ($post) {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
         }
-        if ($header == true) {
+        if ($header) {
             curl_setopt($ch, CURLOPT_HEADER, true);
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, $httpheader);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
-        if ($followlocation == true) {
+        curl_setopt(
+            $ch,
+            CURLOPT_USERAGENT,
+            'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
+        );
+        if ($followlocation) {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         }
-        return curl_exec($ch);
+        $result = curl_exec($ch);
         curl_close($ch);
+        return $result;
     }
-    function classError($error)
+
+    private function classError($error)
     {
-        die("vistapanelApi_error: " . $error);
-    }
-    
-    function CheckCpanelUrl()
-    {
-        if (empty($this->cpanel_url)) {
-            $this->classError("Please set cpanel_url first.");
-        }
-        if (substr($this->cpanel_url, -1) == "/") {
-            $this->cpanel_url = substr_replace($this->cpanel_url, "", -1);
-        }
+        die("VistapanelApi_error: " . $error);
     }
     
-    function CheckLogin()
+    private function checkCpanelUrl()
     {
-        if ($this->loggedin == false) {
+        if (empty($this->cpanelUrl)) {
+            $this->classError("Please set cpanelUrl first.");
+        }
+        if (substr($this->cpanelUrl, -1) == "/") {
+            $this->cpanelUrl = substr_replace($this->cpanelUrl, "", -1);
+        }
+    }
+    
+    private function checkLogin()
+    {
+        $this->checkCpanelUrl();
+        if (!$this->loggedIn) {
             $this->classError("Not logged in.");
         }
     }
     
-    function Login($username, $password, $theme = "PaperLantern")
+    public function login($username, $password, $theme = "PaperLantern")
     {
-        $this->CheckCpanelUrl();
+        $this->checkCpanelUrl();
         if (!isset($username)) {
             $this->classError("username is required.");
         }
         if (!isset($password)) {
             $this->classError("password is required.");
         }
-        $login = $this->SimpleCurl($this->cpanel_url . "/login.php", true, array(
+        $login = $this->simpleCurl($this->cpanelUrl . "/login.php", true, array(
             "uname" => $username,
             "passwd" => $password,
             "theme" => $theme,
@@ -86,19 +105,29 @@ class vistapanelApi
         }
         if (!empty($cookies['PHPSESSID'])) {
             if (strpos($login, "document.location.href = 'panel/indexpl.php") !== false) {
-                if ($this->loggedin !== true) {
-                    $this->loggedin           = true;
+                if ($this->loggedIn !== true) {
+                    $this->loggedIn           = true;
                     $this->accountUsername    = $username;
-                    $this->vistapanel_session = $cookies[$this->vistapanel_sessionName];
-                    $this->vistapanel_token   = $this->getToken();
-                    $checkImportantNotice     = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php", false, array(), false, array(
-                        "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-                    ));
-                    if (strpos($checkImportantNotice, "To notify you of changes to service and offers we need permission to send you email") !== false) {
-                        $this->SimpleCurl($this->cpanel_url . "/panel/approve.php", true, array(
+                    $this->vistapanelSession = $cookies[$this->vistapanelSessionName];
+                    $this->vistapanelToken   = $this->getToken();
+                    $checkImportantNotice     = $this->simpleCurl(
+                        $this->cpanelUrl . "/panel/indexpl.php",
+                        false,
+                        array(),
+                        false,
+                        array(
+                            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+                        )
+                    );
+                    if (!strpos(
+                        $checkImportantNotice,
+                        "To notify you of changes to service and offers we need permission to send you email")
+                    )
+                    {
+                        $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", true, array(
                             "submit" => true
                         ), false, array(
-                            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+                            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
                         ));
                     }
                 } else {
@@ -112,61 +141,23 @@ class vistapanelApi
         }
     }
     
-    function createDatabase($dbname = "")
+    public function createDatabase($dbname = "")
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         if (empty($dbname)) {
             $this->classError("dbname is required.");
         }
-        $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=mysql&cmd=create", true, array(
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create", true, array(
             "db" => $dbname
         ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ));
         return true;
     }
-    function changePackage($username, $newPackage)
-{
-    // Check for required parameters
-    if (empty($username)) {
-        throw new Exception("Username is required.");
-    }
-    if (empty($newPackage)) {
-        throw new Exception("New package name is required.");
-    }
 
-    // Construct API request
-    $url = "https://panel.myownfreehost.net/xml-api/changepackage.php";
-    $data = array(
-        "user" => $username,
-        "pkg" => $newPackage
-    );
-    $options = array(
-        CURLOPT_USERPWD => "your_username:your_password", // Replace with your actual username and password
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query($data),
-        CURLOPT_RETURNTRANSFER => true
-    );
-
-    // Send API request and parse response
-    $curl = curl_init($url);
-    curl_setopt_array($curl, $options);
-    $response = curl_exec($curl);
-    curl_close($curl);
-
-    $xml = simplexml_load_string($response);
-    if ($xml->result->status == 1) {
-        return true;
-    } else {
-        throw new Exception("Package change failed: " . $xml->result->statusmsg);
-    }
-}
-
-    function uploadKey($domainname,$key,$csr)
+    public function uploadKey($domainname, $key, $csr)
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         if (empty($domainname)) {
             $this->classError("domainname is required.");
             
@@ -175,20 +166,20 @@ class vistapanelApi
             $this->classError("key is required.");
             
         }
-        $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
+        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
             "domain_name" => $domainname,
             "csr" => $csr,
             "key" => $key
             
         ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ));
         return true;
     }
-        function uploadCert($domainname,$cert)
+
+    public function uploadCert($domainname, $cert)
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         if (empty($domainname)) {
             $this->classError("domainname is required.");
             
@@ -197,35 +188,41 @@ class vistapanelApi
             $this->classError("cert is required.");
             
         }
-        $this->SimpleCurl($this->cpanel_url . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
+        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
             "domain_name" => $domainname,
             "cert" => $cert
             
         ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ));
         return true;
     }
-    function listDatabases()
+
+    public function listDatabases()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         $databases   = array();
-        $htmlContent = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=pma", false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        $DOM         = new DOMDocument();
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=pma",
+            false,
+            array(),
+            false,
+            array(
+                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+            )
+        );
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $DOM->loadHTML($htmlContent);
+        $dom->loadHTML($htmlContent);
         libxml_clear_errors();
-        $Header = $DOM->getElementsByTagName('th');
-        $Detail = $DOM->getElementsByTagName('td');
-        foreach ($Header as $NodeHeader) {
-            $aDataTableHeaderHTML[] = trim($NodeHeader->textContent);
+        $header = $dom->getElementsByTagName('th');
+        $detail = $dom->getElementsByTagName('td');
+        foreach ($header as $nodeHeader) {
+            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
         $i = 0;
         $j = 0;
-        foreach ($Detail as $sNodeDetail) {
+        foreach ($detail as $sNodeDetail) {
             $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
             $i                          = $i + 1;
             $j                          = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
@@ -243,40 +240,43 @@ class vistapanelApi
         return $databases;
     }
     
-    function deleteDatabase($database = "")
+    public function deleteDatabase($database = "")
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         if (empty($database)) {
             $this->classError("database is required.");
         }
-      //  if (!array_key_exists($database, $this->listDatabases())) {
         if (!in_array($database, $this->listDatabases())) {
-            $this->classError("The database you're trying to remove doesn't exists.");
+            $this->classError("The database you're trying to remove doesn't exist.");
         }
-        $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=mysql&cmd=remove", true, array(
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=remove", true, array(
             "toremove" => $this->accountUsername . "_" . $database,
             "Submit2" => "Remove Database"
         ), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ));
         return true;
     }
     
-    function getPhpmyadminLink($database = "")
+    public function getPhpmyadminLink($database = "")
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         if (empty($database)) {
             $this->classError("database is required.");
         }
         if (!array_key_exists($database, $this->listDatabases())) {
-            $this->classError("The database you're trying to get the PMA link of doesn't exists.");
+            $this->classError("The database you're trying to get the PMA link of doesn't exist.");
         }
-        $htmlContent = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=pma", false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        $dom         = new DOMDocument;
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=pma",
+            false,
+            array(),
+            false,
+            array(
+                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+            )
+        );
+        $dom = new DOMDocument;
         libxml_use_internal_errors(true);
         $dom->loadHTML($htmlContent);
         libxml_clear_errors();
@@ -288,12 +288,11 @@ class vistapanelApi
         }
     }
     
-    function getToken()
+    public function getToken()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        $homepage = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php", false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+        $this->checkLogin();
+        $homepage = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, array(), false, array(
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ));
         $json     = $this->getLineWithString($homepage, "/panel/indexpl.php?option=passwordchange&ttt=");
         $json     = substr_replace($json, "", -1);
@@ -302,26 +301,31 @@ class vistapanelApi
         return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
     }
     
-    function listAddonDomains()
+    public function listAddonDomains()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         $addonDomains = array();
-        $htmlContent  = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=domains&ttt=" . $this->vistapanel_token, false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        $DOM          = new DOMDocument();
+        $htmlContent  = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=domains&ttt=" . $this->vistapanelToken,
+            false,
+            array(),
+            false,
+            array(
+                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+            )
+        );
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $DOM->loadHTML($htmlContent);
+        $dom->loadHTML($htmlContent);
         libxml_clear_errors();
-        $Header = $DOM->getElementsByTagName('th');
-        $Detail = $DOM->getElementsByTagName('td');
-        foreach ($Header as $NodeHeader) {
-            $aDataTableHeaderHTML[] = trim($NodeHeader->textContent);
+        $header = $dom->getElementsByTagName('th');
+        $detail = $dom->getElementsByTagName('td');
+        foreach ($header as $nodeHeader) {
+            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
         $i = 0;
         $j = 0;
-        foreach ($Detail as $sNodeDetail) {
+        foreach ($detail as $sNodeDetail) {
             $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
             $i                          = $i + 1;
             $j                          = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
@@ -339,26 +343,31 @@ class vistapanelApi
         return $addonDomains;
     }
     
-    function listSubDomains()
+    public function listSubDomains()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
+        $this->checkLogin();
         $subDomains  = array();
-        $htmlContent = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=subdomains&ttt=" . $this->vistapanel_token, false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ));
-        $DOM         = new DOMDocument();
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=subdomains&ttt=" . $this->vistapanelToken,
+            false,
+            array(),
+            false,
+            array(
+                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+            )
+        );
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $DOM->loadHTML($htmlContent);
+        $dom->loadHTML($htmlContent);
         libxml_clear_errors();
-        $Header = $DOM->getElementsByTagName('th');
-        $Detail = $DOM->getElementsByTagName('td');
-        foreach ($Header as $NodeHeader) {
-            $aDataTableHeaderHTML[] = trim($NodeHeader->textContent);
+        $header = $dom->getElementsByTagName('th');
+        $detail = $dom->getElementsByTagName('td');
+        foreach ($header as $nodeHeader) {
+            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
         $i = 0;
         $j = 0;
-        foreach ($Detail as $sNodeDetail) {
+        foreach ($detail as $sNodeDetail) {
             $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
             $i                          = $i + 1;
             $j                          = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
@@ -378,13 +387,19 @@ class vistapanelApi
     }
     
 
-    function GetSoftaculousLink()
+    public function getSoftaculousLink()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        $getlink = $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=installer&ttt=" . $this->vistapanel_token, false, array(), true, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
-        ), true);
+        $this->checkLogin();
+        $getlink = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=installer&ttt=" . $this->vistapanelToken,
+            false,
+            array(),
+            true,
+            array(
+                "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
+            ),
+            true
+        );
         if (preg_match('~Location: (.*)~i', $getlink, $match)) {
             $location = trim($match[1]);
         }
@@ -392,19 +407,17 @@ class vistapanelApi
     }
     
  
-    function Logout()
+    public function logout()
     {
-        $this->CheckCpanelUrl();
-        $this->CheckLogin();
-        $this->SimpleCurl($this->cpanel_url . "/panel/indexpl.php?option=signout", false, array(), false, array(
-            "Cookie: " . $this->vistapanel_sessionName . "=" . $this->vistapanel_session
+        $this->checkLogin();
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=signout", false, array(), false, array(
+            "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession
         ), true);
-        $cpanel_url         = "";
-        $loggedin           = false;
-        $vistapanel_session = "";
-        $vistapanel_token   = 0;
-        $accountUsername    = "";
+        $this->cpanelUrl = "";
+        $this->loggedIn = false;
+        $this->vistapanelSession = "";
+        $this->vistapanelToken = 0;
+        $this->accountUsername = "";
         return true;
     }
 }
-?>
