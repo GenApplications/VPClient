@@ -83,20 +83,33 @@ class VistapanelApi
         }
     }
 
-    public function setCpanelUrl($url) {
-        if (!isset($url)) {
+    private function getToken()
+    {
+        $this->checkLogin();
+        $homepage = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, array(), false, array(
+            $this->cookie
+        ));
+        $json = $this->getLineWithString($homepage, "/panel/indexpl.php?option=passwordchange&ttt=");
+        $json = substr_replace($json, "", -1);
+        $json = json_decode($json, true);
+        $url = $json['url'];
+        return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
+    }
+
+    public function setCpanelUrl($url = "") {
+        if (empty($url)) {
             $this->classError("url is required.");
         }
         $this->cpanelUrl = $url;
     }
     
-    public function login($username, $password, $theme = "PaperLantern")
+    public function login($username = "", $password = "", $theme = "PaperLantern")
     {
         $this->checkCpanelUrl();
-        if (!isset($username)) {
+        if (empty($username)) {
             $this->classError("username is required.");
         }
-        if (!isset($password)) {
+        if (empty($password)) {
             $this->classError("password is required.");
         }
         $login = $this->simpleCurl($this->cpanelUrl . "/login.php", true, array(
@@ -155,49 +168,6 @@ class VistapanelApi
         }
         $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create", true, array(
             "db" => $dbname
-        ), false, array(
-            $this->cookie
-        ));
-        return true;
-    }
-
-    public function uploadKey($domainname, $key, $csr)
-    {
-        $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-            
-        }
-        if (empty($key)) {
-            $this->classError("key is required.");
-            
-        }
-        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
-            "domain_name" => $domainname,
-            "csr" => $csr,
-            "key" => $key
-            
-        ), false, array(
-            $this->cookie
-        ));
-        return true;
-    }
-
-    public function uploadCert($domainname, $cert)
-    {
-        $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-            
-        }
-        if (empty($cert)) {
-            $this->classError("cert is required.");
-            
-        }
-        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
-            "domain_name" => $domainname,
-            "cert" => $cert
-            
         ), false, array(
             $this->cookie
         ));
@@ -293,20 +263,7 @@ class VistapanelApi
             }
         }
     }
-    
-    public function getToken()
-    {
-        $this->checkLogin();
-        $homepage = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, array(), false, array(
-            $this->cookie
-        ));
-        $json = $this->getLineWithString($homepage, "/panel/indexpl.php?option=passwordchange&ttt=");
-        $json = substr_replace($json, "", -1);
-        $json = json_decode($json, true);
-        $url = $json['url'];
-        return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
-    }
-    
+
     public function listDomains($option = "addon")
     {
         /* Parses the domain table and returns all domains in a category.
@@ -365,6 +322,49 @@ class VistapanelApi
         }
         return $domains;
     }
+
+    public function uploadKey($domainname = "", $key = "", $csr = "")
+    {
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+            
+        }
+        if (empty($key)) {
+            $this->classError("key is required.");
+            
+        }
+        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
+            "domain_name" => $domainname,
+            "csr" => $csr,
+            "key" => $key
+            
+        ), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
+
+    public function uploadCert($domainname = "", $cert = "")
+    {
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+            
+        }
+        if (empty($cert)) {
+            $this->classError("cert is required.");
+            
+        }
+        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
+            "domain_name" => $domainname,
+            "cert" => $cert
+            
+        ), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
     
     public function getSoftaculousLink()
     {
@@ -395,6 +395,7 @@ class VistapanelApi
         $this->vistapanelSession = "";
         $this->vistapanelToken = 0;
         $this->accountUsername = "";
+        $this->cookie = "";
         return true;
     }
 }
