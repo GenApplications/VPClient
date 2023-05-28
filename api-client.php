@@ -96,6 +96,50 @@ class VistapanelApi
         return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
     }
 
+    private function getTableElements($url = "", $id = "") {
+        if (empty($url)) {
+            $this->classError("url is required");
+        }
+        $this->checkLogin();
+        $htmlContent = $this->simpleCurl(
+            $url,
+            false,
+            array(),
+            false,
+            array(
+                $this->cookie
+            )
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+        libxml_clear_errors();
+        if (empty($id)) {
+            $header = $dom->getElementsByTagName('th');
+            $detail = $dom->getElementsByTagName('td');
+        } else {
+            $header = $dom->getElementById($id)->getElementsByTagName('th');
+            $detail = $dom->getElementById($id)->getElementsByTagName('td');
+        }
+        
+        foreach ($header as $nodeHeader) {
+            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
+        }
+        $i = 0;
+        $j = 0;
+        foreach ($detail as $sNodeDetail) {
+            $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
+            $i = $i + 1;
+            $j = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
+        }
+        for ($i = 0; $i < count($aDataTableDetailHTML); $i++) {
+            for ($j = 0; $j < count($aDataTableHeaderHTML); $j++) {
+                $aTempData[$i][$aDataTableHeaderHTML[$j]] = $aDataTableDetailHTML[$i][$j];
+            }
+        }
+        return $aTempData;
+    }
+
     public function setCpanelUrl($url = "") {
         if (empty($url)) {
             $this->classError("url is required.");
@@ -176,40 +220,8 @@ class VistapanelApi
 
     public function listDatabases()
     {
-        $this->checkLogin();
         $databases = array();
-        $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=pma",
-            false,
-            array(),
-            false,
-            array(
-                $this->cookie
-            )
-        );
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($htmlContent);
-        libxml_clear_errors();
-        $header = $dom->getElementsByTagName('th');
-        $detail = $dom->getElementsByTagName('td');
-        foreach ($header as $nodeHeader) {
-            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
-        }
-        $i = 0;
-        $j = 0;
-        foreach ($detail as $sNodeDetail) {
-            $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
-            $i = $i + 1;
-            $j = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
-        }
-        for ($i = 0; $i < count($aDataTableDetailHTML); $i++) {
-            for ($j = 0; $j < count($aDataTableHeaderHTML); $j++) {
-                $aTempData[$i][$aDataTableHeaderHTML[$j]] = $aDataTableDetailHTML[$i][$j];
-            }
-        }
-        $aDataTableDetailHTML = $aTempData;
-        unset($aTempData);
+        $aDataTableDetailHTML = $this->getTableElements($this->cpanelUrl . "/panel/indexpl.php?option=pma");
         foreach ($aDataTableDetailHTML as $database) {
             $databases[str_replace($this->accountUsername . "_", "", array_shift($database))] = true;
         }
@@ -285,38 +297,10 @@ class VistapanelApi
                 break;
         }
         $domains = array();
-        $htmlContent = $this->simpleCurl(
+        $aDataTableDetailHTML = $this->getTableElements(
             $this->cpanelUrl . "/panel/indexpl.php?option={$option}&ttt=" . $this->vistapanelToken,
-            false,
-            array(),
-            false,
-            array(
-                $this->cookie
-            )
+            $id
         );
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($htmlContent);
-        libxml_clear_errors();
-        $header = $dom->getElementById($id)->getElementsByTagName('th');
-        $detail = $dom->getElementById($id)->getElementsByTagName('td');
-        foreach ($header as $nodeHeader) {
-            $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
-        }
-        $i = 0;
-        $j = 0;
-        foreach ($detail as $sNodeDetail) {
-            $aDataTableDetailHTML[$j][] = trim($sNodeDetail->textContent);
-            $i = $i + 1;
-            $j = $i % count($aDataTableHeaderHTML) == 0 ? $j + 1 : $j;
-        }
-        for ($i = 0; $i < count($aDataTableDetailHTML); $i++) {
-            for ($j = 0; $j < count($aDataTableHeaderHTML); $j++) {
-                $aTempData[$i][$aDataTableHeaderHTML[$j]] = $aDataTableDetailHTML[$i][$j];
-            }
-        }
-        $aDataTableDetailHTML = $aTempData;
-        unset($aTempData);
         foreach ($aDataTableDetailHTML as $domain) {
             $domains[array_shift($domain)] = true;
         }
