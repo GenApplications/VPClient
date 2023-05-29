@@ -307,6 +307,41 @@ class VistapanelApi
         return $domains;
     }
 
+    public function createRedirect($domainname = "", $target = "")
+    {
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
+        if (empty($target)) {
+            $this->classError("target is required.");
+        }
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=redirect_add", true, array(
+            "domain_name" => $domainname,
+            "redirect_url" => $target
+
+        ), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
+
+    public function deleteRedirect($domainname = "")
+    {
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=redirect_rem&domain=" . $domainname . "&redirect_url=http://",
+            true,
+            array(),
+            false,
+            array($this->cookie)
+        );
+        return true;
+    }
+
     public function uploadKey($domainname = "", $key = "", $csr = "")
     {
         $this->checkLogin();
