@@ -41,7 +41,7 @@ Logs in to the VistaPanel control panel.
 
 Creates a new database.
 
-- `$dbname` (string): The name of the database.
+- `$dbname` (string): The name of the database, without the account prefix.
 
 #### `listDatabases()`
 
@@ -51,13 +51,13 @@ Returns an array of databases associated with the logged-in account.
 
 Deletes a database.
 
-- `$database` (string): The name of the database.
+- `$database` (string): The name of the database, without the account prefix.
 
 #### `getPhpmyadminLink($database)`
 
 Returns the phpMyAdmin link for a specific database.
 
-- `$database` (string): The name of the database.
+- `$database` (string): The name of the database, without the account prefix.
 
 #### `listDomains($option)`
 
@@ -96,11 +96,10 @@ Uploads an SSL certificate for a domain.
 #### `getSoftaculousLink()`
 
 Returns the Softaculous link for the control panel.
-##### NOTE: Some testing have been done, for me, the link doesn't return. However, it enables the Softaculous Account.
 
 #### `logout()`
 
-Logs out from the control panel.
+Logs out from the control panel, and resets client configuration.
 
 #### `approveNotification()`
 
