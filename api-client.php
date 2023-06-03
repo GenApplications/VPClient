@@ -417,4 +417,12 @@ class VistapanelApi
         $this->cookie = "";
         return true;
     }
+    public function approveNotification()
+    {
+        $this->checkLogin();
+        $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", false, array(), false, array(
+            $this->cookie
+        ), true);
+        return true;
+    }
 }
