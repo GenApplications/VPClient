@@ -96,10 +96,15 @@ Uploads an SSL certificate for a domain.
 #### `getSoftaculousLink()`
 
 Returns the Softaculous link for the control panel.
+##### NOTE: Some testing have been done, for me, the link doesn't return. However, it enables the Softaculous Account.
 
 #### `logout()`
 
 Logs out from the control panel.
+
+#### `approveNotification()`
+
+Allow iFastNet to send you notifications about Account Suspensions, also unlock vPanel.
 
 ## Example Usage
 
