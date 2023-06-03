@@ -103,7 +103,7 @@ Logs out from the control panel, and resets client configuration.
 
 #### `approveNotification()`
 
-Allow iFastNet to send you notifications about Account Suspensions, also unlock vPanel.
+Allows iFastNet to send you notifications about account suspensions, also unlocks the control panel.
 
 ## Example Usage
 
