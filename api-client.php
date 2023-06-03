@@ -385,7 +385,7 @@ class VistapanelApi
         return true;
     }
     
-    public function getSoftaculousLink()
+    public function enableSoftaculous()
     {
         $this->checkLogin();
         $getlink = $this->simpleCurl(
@@ -401,7 +401,7 @@ class VistapanelApi
         if (preg_match('~Location: (.*)~i', $getlink, $match)) {
             $location = trim($match[1]);
         }
-        return $location;
+        return "Softaculous Enabled";
     }
     
     public function logout()
