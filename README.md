@@ -93,10 +93,9 @@ Uploads an SSL certificate for a domain.
 - `$domainname` (string): The name of the domain.
 - `$cert` (string): The content of the SSL certificate file.
 
-#### `getSoftaculousLink()`
+#### `enableSoftaculous()`
 
-Returns the Softaculous link for the control panel.
-##### NOTE: Some testing have been done, for me, the link doesn't return. However, it enables the Softaculous Account.
+Enables Softaculous for the control panel.
 
 #### `logout()`
 
