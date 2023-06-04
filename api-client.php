@@ -62,7 +62,7 @@ class VistapanelApi
 
     private function classError($error)
     {
-        die("VistapanelApi_error: " . $error);
+        die("VistapanelApi_Error: " . $error);
     }
     
     private function checkCpanelUrl()
@@ -146,6 +146,15 @@ class VistapanelApi
         }
         $this->cpanelUrl = $url;
     }
+
+    public function approveNotification()
+    {
+        $this->checkLogin();
+        $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", true, array("submit" => true), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
     
     public function login($username = "", $password = "", $theme = "PaperLantern")
     {
@@ -196,11 +205,7 @@ class VistapanelApi
             "To notify you of changes to service and offers we need permission to send you email")
         )
         {
-            $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", true, array(
-                "submit" => true
-            ), false, array(
-                $this->cookie
-            ));
+            $this->approveNotification();
         }
     }
     
@@ -316,13 +321,23 @@ class VistapanelApi
         if (empty($target)) {
             $this->classError("target is required.");
         }
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=redirect_add", true, array(
+        $response = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=redirect_add", true, array(
             "domain_name" => $domainname,
             "redirect_url" => $target
 
         ), false, array(
             $this->cookie
-        ));
+        ), true);
+        if (strpos(
+            $response,
+            "The redirect url {$target} does not appear to be a URL (it MUST start with http:// or http:// ! )")
+            !== false
+        )
+        {
+            $this->classError(
+                "The redirect url {$target} does not appear to be a URL. Make sure it starts with http:// or https://"
+            );
+        }
         return true;
     }
 
@@ -415,14 +430,6 @@ class VistapanelApi
         $this->vistapanelToken = 0;
         $this->accountUsername = "";
         $this->cookie = "";
-        return true;
-    }
-    public function approveNotification()
-    {
-        $this->checkLogin();
-        $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", false, array(), false, array(
-            $this->cookie
-        ), true);
         return true;
     }
 }
