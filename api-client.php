@@ -432,4 +432,53 @@ class VistapanelApi
         $this->cookie = "";
         return true;
     }
+    public function getSSLPrivateKey($domain)
+    {
+        $this->checkLogin();
+        $databases = array();
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domain,
+            false,
+            array(),
+            false,
+            array(
+                $this->cookie
+            )
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+
+        $xpath = new DOMXPath($dom);
+
+        $privatekeys = $xpath->query("//textarea[@name='key']");
+        foreach($privatekeys as $privatekey) {
+            return $privatekey->nodeValue;
+        }
+    }
+
+    public function getSSLCertificate($domain)
+    {
+        $this->checkLogin();
+        $databases = array();
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domain,
+            false,
+            array(),
+            false,
+            array(
+                $this->cookie
+            )
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+
+        $xpath = new DOMXPath($dom);
+
+        $certificates = $xpath->query("//textarea[@name='cert']");
+        foreach($certificates as $certificate) {
+            return $certificate->nodeValue;
+        }
+    }
 }
