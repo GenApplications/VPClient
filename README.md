@@ -93,6 +93,18 @@ Uploads an SSL certificate for a domain.
 - `$domainname` (string): The name of the domain.
 - `$cert` (string): The content of the SSL certificate file.
 
+#### `getSSLPrivateKey($domain)`
+
+Get the currently installed SSL Key for a domain
+
+- `$domain` (string): The name of the domain.
+
+#### `getSSLCertificate($domain)`
+
+Get the currently installed SSL Certificate for a domain
+
+- `$domain` (string): The name of the domain.
+
 #### `getSoftaculousLink()`
 
 Returns the Softaculous link for the control panel.
