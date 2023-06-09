@@ -280,7 +280,7 @@ class VistapanelApi
             }
         }
     }
-public function listDomains($option = "all")
+    public function listDomains($option = "all")
     {
         /* Parses the domain table and returns all domains in a category.
          * Available options: "all", "addon", "sub" and "parked". Returns addon domains if no parameter is passed.
