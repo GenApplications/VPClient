@@ -63,7 +63,7 @@ Returns the phpMyAdmin link for a specific database.
 
 Returns an array of domains in a specific category.
 
-- `$option` (string): The category of domains to retrieve. Available options: "addon", "sub", and "parked" (default: "addon").
+- `$option` (string): The category of domains to retrieve. Available options: "all", "addon", "sub", and "parked" (default: "all").
 
 #### `createRedirect($domainname, $target)`
 
