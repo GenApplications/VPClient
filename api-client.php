@@ -11,7 +11,6 @@ class VistapanelApi
     private $loggedIn = false;
     private $vistapanelSession = "";
     private $vistapanelSessionName = "PHPSESSID";
-    private $vistapanelToken = 0;
     private $accountUsername = "";
     private $cookie = "";
     
@@ -73,6 +72,7 @@ class VistapanelApi
         if (substr($this->cpanelUrl, -1) == "/") {
             $this->cpanelUrl = substr_replace($this->cpanelUrl, "", -1);
         }
+        return true;
     }
     
     private function checkLogin()
@@ -81,6 +81,7 @@ class VistapanelApi
         if (!$this->loggedIn) {
             $this->classError("Not logged in.");
         }
+        return true;
     }
 
     private function getToken()
@@ -89,7 +90,7 @@ class VistapanelApi
         $homepage = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, array(), false, array(
             $this->cookie
         ));
-        $json = $this->getLineWithString($homepage, "/panel/indexpl.php?option=passwordchange&ttt=");
+        $json = $this->getLineWithString($homepage, "/panel\/indexpl.php?option=domains&ttt=");
         $json = substr_replace($json, "", -1);
         $json = json_decode($json, true);
         $url = $json['url'];
@@ -145,6 +146,7 @@ class VistapanelApi
             $this->classError("url is required.");
         }
         $this->cpanelUrl = $url;
+        return true;
     }
 
     public function approveNotification()
@@ -198,7 +200,6 @@ class VistapanelApi
         $this->accountUsername = $username;
         $this->vistapanelSession = $cookies[$this->vistapanelSessionName];
         $this->cookie = "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession;
-        $this->vistapanelToken = $this->getToken();
         $checkImportantNotice = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php",
             false,
@@ -215,6 +216,7 @@ class VistapanelApi
         {
             $this->approveNotification();
         }
+        return true;
     }
     
     public function createDatabase($dbname = "")
@@ -315,7 +317,7 @@ class VistapanelApi
         }
         $domains = array();
         $aDataTableDetailHTML = $this->getTableElements(
-            $this->cpanelUrl . "/panel/indexpl.php?option={$option}&ttt=" . $this->vistapanelToken,
+            $this->cpanelUrl . "/panel/indexpl.php?option={$option}&ttt=" . $this->getToken(),
             $id
         );
         foreach ($aDataTableDetailHTML as $domain) {
@@ -466,7 +468,7 @@ class VistapanelApi
     {
         $this->checkLogin();
         $getlink = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=installer&ttt=" . $this->vistapanelToken,
+            $this->cpanelUrl . "/panel/indexpl.php?option=installer&ttt=" . $this->getToken(),
             false,
             array(),
             true,
@@ -489,7 +491,6 @@ class VistapanelApi
         ), true);
         $this->loggedIn = false;
         $this->vistapanelSession = "";
-        $this->vistapanelToken = 0;
         $this->accountUsername = "";
         $this->cookie = "";
         return true;
