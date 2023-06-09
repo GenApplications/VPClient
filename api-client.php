@@ -281,10 +281,10 @@ class VistapanelApi
         }
     }
 
-    public function listDomains($option = "addon")
+    public function listDomains($option = "all")
     {
         /* Parses the domain table and returns all domains in a category.
-         * Available options: "addon", "sub" and "parked". Returns addon domains if no parameter is passed.
+         * Available options: "all", "addon", "sub" and "parked". Returns all domains if no parameter is passed.
          */
         $this->checkLogin();
         switch ($option) {
@@ -296,9 +296,13 @@ class VistapanelApi
                 $option = "parked";
                 $id = "parkeddomaintbl";
                 break;
-            default:
+            case "addon":
                 $option = "domains";
                 $id = "subdomaintbl";
+                break;
+            default:
+                $option = "ssl";
+                $id = "sql_db_tbl";
                 break;
         }
         $domains = array();
@@ -356,7 +360,6 @@ class VistapanelApi
         );
         return true;
     }
-     
     
     public function getSSLPrivateKey($domain)
     {
@@ -407,8 +410,6 @@ class VistapanelApi
             return $certificate->nodeValue;
         }
     }
-    
-    
     
     public function uploadKey($domainname = "", $key = "", $csr = "")
     {
