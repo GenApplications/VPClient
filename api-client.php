@@ -18,7 +18,7 @@ class VistapanelApi
     private function getLineWithString($content, $str)
     {
         $lines = explode("\n", $content);
-        foreach ($lines as $lineNumber => $line) {
+        foreach ($lines as $line) {
             if (strpos($line, $str) !== false) {
                 return $line;
             }
@@ -151,6 +151,14 @@ class VistapanelApi
     {
         $this->checkLogin();
         $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", true, array("submit" => true), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
+
+    public function disapproveNotification() {
+        $this->checkLogin();
+        $this->simpleCurl($this->cpanelUrl . "/panel/disapprove.php", true, array("submit" => false), false, array(
             $this->cookie
         ));
         return true;
