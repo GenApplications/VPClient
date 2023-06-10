@@ -170,9 +170,11 @@ class VistapanelApi
     {
         $this->checkCpanelUrl();
         if (empty($username)) {
+            return "username is required.";
             $this->classError("username is required.");
         }
         if (empty($password)) {
+            return "password is required.";
             $this->classError("password is required.");
         }
         $login = $this->simpleCurl($this->cpanelUrl . "/login.php", true, array(
@@ -188,12 +190,15 @@ class VistapanelApi
             $cookies = array_merge($cookies, $cookie);
         }
         if ($this->loggedIn === true) {
+            return "You are already logged in.";
             $this->classError("You are already logged in.");
         }
         if (empty($cookies[$this->vistapanelSessionName])) {
+            return "Unable to login.";
             $this->classError("Unable to login.");
         }
         if (strpos($login, "document.location.href = 'panel/indexpl.php") === false) {
+            return "Invalid login credentials.";
             $this->classError("Invalid login credentials.");
         }
         $this->loggedIn = true;
@@ -526,6 +531,27 @@ class VistapanelApi
 
         $values = $domxpath->query($xpath);
         return $values->item(0)->getAttribute("value");
+    }
+
+    public function updateErrorPages($domainname = "", $value400, $value401, $value403, $value404, $value503)
+    {
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+            
+        }
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=errorpages_change", true, array(
+            "domain_name" => $domainname,
+            "400" => $value400,
+            "401" => $value401,
+            "403" => $value403,
+            "404" => $value404,
+            "503" => $value503
+            
+        ), false, array(
+            $this->cookie
+        ));
+        return true;
     }
     
     public function logout()
