@@ -371,12 +371,14 @@ class VistapanelApi
         return true;
     }
     
-    public function getSSLPrivateKey($domain)
+    public function getPrivateKey($domainname = "")
     {
         $this->checkLogin();
-        $databases = array();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
         $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domain,
+            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
             false,
             array(),
             false,
@@ -391,17 +393,17 @@ class VistapanelApi
         $xpath = new DOMXPath($dom);
 
         $privatekeys = $xpath->query("//textarea[@name='key']");
-        foreach($privatekeys as $privatekey) {
-            return $privatekey->nodeValue;
-        }
+        return $privatekeys->item(0)->nodeValue;
     }
 
-    public function getSSLCertificate($domain)
+    public function getCertificate($domainname = "")
     {
         $this->checkLogin();
-        $databases = array();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
         $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domain,
+            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
             false,
             array(),
             false,
@@ -416,21 +418,17 @@ class VistapanelApi
         $xpath = new DOMXPath($dom);
 
         $certificates = $xpath->query("//textarea[@name='cert']");
-        foreach($certificates as $certificate) {
-            return $certificate->nodeValue;
-        }
+        return $certificates->item(0)->nodeValue;
     }
     
-    public function uploadKey($domainname = "", $key = "", $csr = "")
+    public function uploadPrivateKey($domainname = "", $key = "", $csr = "")
     {
         $this->checkLogin();
         if (empty($domainname)) {
             $this->classError("domainname is required.");
-            
         }
         if (empty($key)) {
             $this->classError("key is required.");
-            
         }
         $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
             "domain_name" => $domainname,
@@ -443,16 +441,14 @@ class VistapanelApi
         return true;
     }
 
-    public function uploadCert($domainname = "", $cert = "")
+    public function uploadCertificate($domainname = "", $cert = "")
     {
         $this->checkLogin();
         if (empty($domainname)) {
             $this->classError("domainname is required.");
-            
         }
         if (empty($cert)) {
             $this->classError("cert is required.");
-            
         }
         $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
             "domain_name" => $domainname,
@@ -463,7 +459,25 @@ class VistapanelApi
         ));
         return true;
     }
-    
+
+    public function deleteCertificate($domain)
+    {
+        $this->checkLogin();
+         if (empty($domain)) {
+            $this->classError("domain is required.");
+        }
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/sslconfigure/deletecert.php" .
+            "?domain_name=" . $domain .
+            "&username=" . $this->accountUsername,
+            false,
+            array(),
+            false,
+            array($this->cookie)
+        );
+        return true;
+    }
+
     public function getSoftaculousLink()
     {
         $this->checkLogin();
@@ -481,6 +495,37 @@ class VistapanelApi
             $location = trim($match[1]);
         }
         return $location;
+    }
+
+    public function showErrorPage($domainname = "", $option = "400")
+    {
+        /* Returns the URL that has been set for an error page.
+         * Available options: "400", "401", "403", "404, and "503". Returns 400 if no option is given.
+         */
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
+        $xpath = '//input[@name="' . $option . '"]';
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=errorpages_configure",
+            true,
+            array(
+                "domain_name" => $domainname
+            ),
+            false,
+            array(
+                $this->cookie
+            )
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+
+        $domxpath = new DOMXPath($dom);
+
+        $values = $domxpath->query($xpath);
+        return $values->item(0)->getAttribute("value");
     }
     
     public function logout()
