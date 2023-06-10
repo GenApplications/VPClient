@@ -84,6 +84,20 @@ class VistapanelApi
         return true;
     }
 
+    private function checkForEmptyParams(...$params)
+    {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 2)[1];
+        $caller = $trace['function'];
+        $reflection = new ReflectionMethod($this, $caller);
+        $parameters = $reflection->getParameters();
+    
+        foreach ($params as $index => $parameter) {
+            if (empty($parameter)) {
+                $this->classError($parameters[$index]->getName() . " is required.");
+            }
+        }
+    }
+
     private function getToken()
     {
         $this->checkLogin();
@@ -98,10 +112,8 @@ class VistapanelApi
     }
 
     private function getTableElements($url = "", $id = "") {
-        if (empty($url)) {
-            $this->classError("url is required");
-        }
         $this->checkLogin();
+        $this->checkForEmptyParams($url);
         $htmlContent = $this->simpleCurl(
             $url,
             false,
@@ -142,9 +154,7 @@ class VistapanelApi
     }
 
     public function setCpanelUrl($url = "") {
-        if (empty($url)) {
-            $this->classError("url is required.");
-        }
+        $this->checkForEmptyParams($url);
         $this->cpanelUrl = $url;
         return true;
     }
@@ -169,12 +179,7 @@ class VistapanelApi
     public function login($username = "", $password = "", $theme = "PaperLantern")
     {
         $this->checkCpanelUrl();
-        if (empty($username)) {
-            $this->classError("username is required.");
-        }
-        if (empty($password)) {
-            $this->classError("password is required.");
-        }
+        $this->checkForEmptyParams($username, $password);
         $login = $this->simpleCurl($this->cpanelUrl . "/login.php", true, array(
             "uname" => $username,
             "passwd" => $password,
@@ -222,9 +227,7 @@ class VistapanelApi
     public function createDatabase($dbname = "")
     {
         $this->checkLogin();
-        if (empty($dbname)) {
-            $this->classError("dbname is required.");
-        }
+        $this->checkForEmptyParams($dbname);
         $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create", true, array(
             "db" => $dbname
         ), false, array(
@@ -246,9 +249,7 @@ class VistapanelApi
     public function deleteDatabase($database = "")
     {
         $this->checkLogin();
-        if (empty($database)) {
-            $this->classError("database is required.");
-        }
+        $this->checkForEmptyParams($database);
         if (!in_array($database, $this->listDatabases())) {
             $this->classError("The database you're trying to remove doesn't exist.");
         }
@@ -264,9 +265,7 @@ class VistapanelApi
     public function getPhpmyadminLink($database = "")
     {
         $this->checkLogin();
-        if (empty($database)) {
-            $this->classError("database is required.");
-        }
+        $this->checkForEmptyParams($database);
         if (!array_key_exists($database, $this->listDatabases())) {
             $this->classError("The database you're trying to get the PMA link of doesn't exist.");
         }
@@ -329,12 +328,7 @@ class VistapanelApi
     public function createRedirect($domainname = "", $target = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
-        if (empty($target)) {
-            $this->classError("target is required.");
-        }
+        $this->checkForEmptyParams($domainname, $target);
         $response = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=redirect_add", true, array(
             "domain_name" => $domainname,
             "redirect_url" => $target
@@ -358,9 +352,7 @@ class VistapanelApi
     public function deleteRedirect($domainname = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
+        $this->checkForEmptyParams($domainname);
         $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=redirect_rem&domain=" . $domainname . "&redirect_url=http://",
             true,
@@ -374,9 +366,7 @@ class VistapanelApi
     public function getPrivateKey($domainname = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
+        $this->checkForEmptyParams($domainname);
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
             false,
@@ -399,9 +389,7 @@ class VistapanelApi
     public function getCertificate($domainname = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
+        $this->checkForEmptyParams($domainname);
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
             false,
@@ -424,12 +412,7 @@ class VistapanelApi
     public function uploadPrivateKey($domainname = "", $key = "", $csr = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
-        if (empty($key)) {
-            $this->classError("key is required.");
-        }
+        $this->checkForEmptyParams($domainname, $key);
         $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
             "domain_name" => $domainname,
             "csr" => $csr,
@@ -444,12 +427,7 @@ class VistapanelApi
     public function uploadCertificate($domainname = "", $cert = "")
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
-        if (empty($cert)) {
-            $this->classError("cert is required.");
-        }
+        $this->checkForEmptyParams($domainname, $cert);
         $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
             "domain_name" => $domainname,
             "cert" => $cert
@@ -460,15 +438,13 @@ class VistapanelApi
         return true;
     }
 
-    public function deleteCertificate($domain)
+    public function deleteCertificate($domainname = "")
     {
         $this->checkLogin();
-         if (empty($domain)) {
-            $this->classError("domain is required.");
-        }
+        $this->checkForEmptyParams($domainname);
         $this->simpleCurl(
             $this->cpanelUrl . "/panel/modules-new/sslconfigure/deletecert.php" .
-            "?domain_name=" . $domain .
+            "?domain_name=" . $domainname .
             "&username=" . $this->accountUsername,
             false,
             array(),
@@ -503,9 +479,7 @@ class VistapanelApi
          * Available options: "400", "401", "403", "404, and "503". Returns 400 if no option is given.
          */
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-        }
+        $this->checkForEmptyParams($domainname);
         $xpath = '//input[@name="' . $option . '"]';
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=errorpages_configure",
@@ -528,13 +502,17 @@ class VistapanelApi
         return $values->item(0)->getAttribute("value");
     }
 
-    public function updateErrorPages($domainname = "", $value400, $value401, $value403, $value404, $value503)
+    public function updateErrorPages(
+        $domainname = "",
+        $value400 = "",
+        $value401 = "",
+        $value403 = "",
+        $value404 = "",
+        $value503 = ""
+    )
     {
         $this->checkLogin();
-        if (empty($domainname)) {
-            $this->classError("domainname is required.");
-            
-        }
+        $this->checkForEmptyParams($domainname);
         $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=errorpages_change", true, array(
             "domain_name" => $domainname,
             "400" => $value400,
