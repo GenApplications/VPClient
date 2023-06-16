@@ -536,7 +536,7 @@ class VistapanelApi
          * Available options: "display_errors", "mbstring_http_input", "date_timezone". Returns displayerror if no option is given.
 
             Returning Values:
-            display_errors: true/false (Boolean)
+            display_errors: true(Enabled)/false(Disabled) (Boolean) 
             mbstring_http_input: Value (String)
             date_timezone: Timezone (String)
 
