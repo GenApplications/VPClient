@@ -7,7 +7,7 @@ error_reporting(E_ERROR | E_PARSE);
 class VistapanelApi
 {
     
-    private $cpanelUrl = "";
+    private $cpanelUrl = "https://cpanel.byethost.com";
     private $loggedIn = false;
     private $vistapanelSession = "";
     private $vistapanelSessionName = "PHPSESSID";
@@ -527,6 +527,82 @@ class VistapanelApi
         return true;
     }
     
+
+
+
+    public function showPHPConfig($domainname = "", $option = "display_errors")
+    {
+        /* Returns the URL that has been set for an error page.
+         * Available options: "display_errors", "mbstring_http_input", "date_timezone". Returns displayerror if no option is given.
+
+            Returning Values:
+            display_errors: true(Enabled)/false(Disabled) (Boolean) 
+            mbstring_http_input: Value (String)
+            date_timezone: Timezone (String)
+
+         */
+        $this->checkLogin();
+        $this->checkForEmptyParams($domainname);
+        if ($option!=="date_timezone") {
+            $xpath = '//input[@name="' . $option . '"]';
+        } else {
+            $xpath = "//select[@name='date_timezone']/option[@selected]";
+        }
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=phpchangeconfig_configure",
+            true,
+            array(
+                "domain_name" => $domainname
+            ),
+            false,
+            array(
+                $this->cookie
+            )
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+
+        $domxpath = new DOMXPath($dom);
+
+        $values = $domxpath->query($xpath);
+        if ($option=="mbstring_http_input") {
+            return $values->item(0)->getAttribute("value");
+        } else if ($option=="display_errors") {
+            return $values->item(1)->getAttribute("checked");
+        } else if ($option=="date_timezone") {
+            return $values->item(0)->nodeValue;
+        }
+    }
+
+    public function setPHPConfig(
+        $domainname = "",
+        $displayerrors = "",
+        $mbstringinput = "",
+        $timezone = ""
+    )
+    {
+        $this->checkLogin();
+        $this->checkForEmptyParams($domainname);
+        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=phpchangeconfig_change", true, array(
+            "domain_name" => $domainname,
+            "display_errors" => $displayerrors,
+            "mbstring_http_input" => $mbstringinput,
+            "date_timezone" => $timezone,
+            
+        ), false, array(
+            $this->cookie
+        ));
+        return true;
+    }
+    
+
+
+
+
+
+
+
     public function logout()
     {
         $this->checkLogin();
