@@ -1,4 +1,4 @@
-# VPClient
+# GenerateClient (formerly VPClient)
 ![VPClient](vpclient.png)
 
 A VistaPanel API client in PHP.
