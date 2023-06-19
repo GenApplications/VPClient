@@ -1,0 +1,35 @@
+name: Deploy to gh-pages
+
+on:
+  push:
+    branches:
+      - gh-pages  # Or the branch you want to trigger the workflow on
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # Use the desired Node.js version
+
+      - name: Install dependencies
+        run: npm install  # Or yarn install if you use Yarn
+
+      - name: Build
+        run: npm run docs:build  # Or the command to build your project
+
+      - name: Deploy to gh-pages
+        run: |
+          git config --global user.name "Supernova3339"
+          git config --global user.email "supernova@superdev.one"
+          git checkout -b gh-pages
+          git add .
+          git commit -m "Generate documentation"
+          git push origin gh-pages

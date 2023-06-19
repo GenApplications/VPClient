@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+
+/* Font */
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Markdown Styles */
+
+@layer base {
+
+/* Paragraph */
+  .markdown p {
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    color: #333;
+  }
+  
+  /* Headings */
+   h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+  }
+  
+  h4 {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+  }
+  
+  h5 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  h6 {
+    font-size: 0.875rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Blockquote */
+  blockquote {
+    margin-left: 1.5rem;
+    border-left: 4px solid #333;
+    padding-left: 1rem;
+    color: #555;
+  }
+  
+  /* Table */
+  table {
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  /* Table Header */
+  th {
+    font-weight: bold;
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  /* Table Cell */
+  td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #ccc;
+  }
+
+}
