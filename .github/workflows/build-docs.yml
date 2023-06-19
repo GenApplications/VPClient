@@ -1,4 +1,4 @@
-name: Huild documentation
+name: Build documentation
 
 on:
   push:
