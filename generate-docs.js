@@ -7,9 +7,9 @@ const exec = util.promisify(require('child_process').exec);
 const Prism = require('prismjs');
 
 // CSS Links
-const tailwindCSSLink = `<link href="styles.css" rel="stylesheet">`;
-const prismJSLink = `<link href="../prism.css" rel="stylesheet">
-<script src="../prism.js"></script>`;
+const tailwindCSSLink = `<link href="https://raw.githubusercontent.com/GenerateApps/GenerateClient/gh-pages/docs/styles.css" rel="stylesheet">`;
+const prismJSLink = `<link href="https://raw.githubusercontent.com/GenerateApps/GenerateClient/gh-pages/prism.css" rel="stylesheet">
+<script src="https://raw.githubusercontent.com/GenerateApps/GenerateClient/gh-pages/prism.js"></script>`;
 
 // Input and output directories
 const inputDir = path.join(__dirname, 'content');
