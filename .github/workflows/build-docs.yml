@@ -17,19 +17,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # Use the desired Node.js version
+          node-version: '16'  # Use 16, 17, or 18 ( 16 best )
 
       - name: Install dependencies
-        run: npm install  # Or yarn install if you use Yarn
+        run: npm install 
 
       - name: Build
-        run: npm run docs:build  # Or the command to build your project
+        run: npm run docs:build
 
       - name: Deploy to gh-pages
         run: |
           git config --global user.name "Supernova3339"
           git config --global user.email "supernova@superdev.one"
-          git checkout -b gh-pages
+          git fetch origin gh-pages
+          git branch -r | grep "origin/gh-pages"
+          if [ $? -eq 0 ]; then
+            git checkout gh-pages
+          else
+            git checkout -b gh-pages
+          fi
           git add .
           git commit -m "Generate documentation"
           git push origin gh-pages
