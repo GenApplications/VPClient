@@ -4,7 +4,7 @@
 
 Sets the URL of the VistaPanel control panel.
 
-- `$url` (string): The URL of the control panel.
+- `$url` (string): The URL of the VistaPanel control panel. (ex: panel.xxx.tld)
 
 #### `login($username, $password, $theme)`
 
