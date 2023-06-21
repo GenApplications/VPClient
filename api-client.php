@@ -601,6 +601,35 @@ class VistapanelApi
 
 
 
+ public function getUserStats()
+  {
+
+    function tableToArray($html)
+    {
+      $doc = new DOMDocument();
+      $doc->loadHTML($html);
+      $table = $doc->getElementById("stats");
+      $rows = $table->getElementsByTagName('tr');
+
+      $data = array();
+
+      foreach ($rows as $row) {
+        $cols = $row->getElementsByTagName('td');
+        if ($cols->length === 2) {
+
+          $key = trim($cols->item(0)->nodeValue);
+          $value = trim($cols->item(1)->nodeValue);
+          $data[$key] = $value;
+        }
+      }
+
+      return $data;
+    }
+
+    return tableToArray($this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", true, null, false, array(
+      $this->cookie
+    )));
+  }
 
 
     public function logout()
