@@ -6,14 +6,13 @@ Originally by @oddmario, maintained by @GenerateApps
 error_reporting(E_ERROR | E_PARSE);
 class VistapanelApi
 {
-    
     private $cpanelUrl = "https://cpanel.byethost.com";
     private $loggedIn = false;
     private $vistapanelSession = "";
     private $vistapanelSessionName = "PHPSESSID";
     private $accountUsername = "";
     private $cookie = "";
-    
+
     private function getLineWithString($content, $str)
     {
         $lines = explode("\n", $content);
@@ -28,12 +27,11 @@ class VistapanelApi
     private function simpleCurl(
         $url = "",
         $post = false,
-        $postfields = array(),
+        $postfields = [],
         $header = false,
-        $httpheader = array(),
+        $httpheader = [],
         $followlocation = false
-    )
-    {
+    ) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         if ($post) {
@@ -49,7 +47,7 @@ class VistapanelApi
         curl_setopt(
             $ch,
             CURLOPT_USERAGENT,
-            'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
+            "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13"
         );
         if ($followlocation) {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -63,7 +61,7 @@ class VistapanelApi
     {
         die("VistapanelApi_Error: " . $error);
     }
-    
+
     private function checkCpanelUrl()
     {
         if (empty($this->cpanelUrl)) {
@@ -74,7 +72,7 @@ class VistapanelApi
         }
         return true;
     }
-    
+
     private function checkLogin()
     {
         $this->checkCpanelUrl();
@@ -87,13 +85,15 @@ class VistapanelApi
     private function checkForEmptyParams(...$params)
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 2)[1];
-        $caller = $trace['function'];
+        $caller = $trace["function"];
         $reflection = new ReflectionMethod($this, $caller);
         $parameters = $reflection->getParameters();
-    
+
         foreach ($params as $index => $parameter) {
             if (empty($parameter)) {
-                $this->classError($parameters[$index]->getName() . " is required.");
+                $this->classError(
+                    $parameters[$index]->getName() . " is required."
+                );
             }
         }
     }
@@ -101,40 +101,49 @@ class VistapanelApi
     private function getToken()
     {
         $this->checkLogin();
-        $homepage = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, array(), false, array(
-            $this->cookie
-        ));
-        $json = $this->getLineWithString($homepage, "/panel\/indexpl.php?option=domains&ttt=");
+        $homepage = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php",
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+        $json = $this->getLineWithString(
+            $homepage,
+            "/panel\/indexpl.php?option=domains&ttt="
+        );
         $json = substr_replace($json, "", -1);
         $json = json_decode($json, true);
-        $url = $json['url'];
+        $url = $json["url"];
         return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
     }
 
-    private function getTableElements($url = "", $id = "") {
+    private function getTableElements($url = "", $id = "", $td_class = "")
+    {
         $this->checkLogin();
         $this->checkForEmptyParams($url);
-        $htmlContent = $this->simpleCurl(
-            $url,
-            false,
-            array(),
-            false,
-            array(
-                $this->cookie
-            )
-        );
+        $htmlContent = $this->simpleCurl($url, false, [], false, [
+            $this->cookie,
+        ]);
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
         $dom->loadHTML($htmlContent);
         libxml_clear_errors();
         if (empty($id)) {
-            $header = $dom->getElementsByTagName('th');
-            $detail = $dom->getElementsByTagName('td');
+            $header = $dom->getElementsByTagName("th");
+            $detail = $dom->getElementsByTagName("td");
         } else {
-            $header = $dom->getElementById($id)->getElementsByTagName('th');
-            $detail = $dom->getElementById($id)->getElementsByTagName('td');
+            $header = $dom->getElementById($id)->getElementsByTagName("th");
+            $detail = $dom->getElementById($id)->getElementsByTagName("td");
         }
-        
+        /*if (!(empty($td_class))) {
+            $dom1 = new DOMDocument();
+            libxml_use_internal_errors(true);
+            $dom1->loadHTML($detail->nodeValue);
+            libxml_clear_errors();
+            $dom1xpath = new DOMXPath($dom);
+            $detail = $dom1xpath->query("td[@class='". $td_class . "']");
+        }*/
         foreach ($header as $nodeHeader) {
             $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
@@ -147,13 +156,36 @@ class VistapanelApi
         }
         for ($i = 0; $i < count($aDataTableDetailHTML); $i++) {
             for ($j = 0; $j < count($aDataTableHeaderHTML); $j++) {
-                $aTempData[$i][$aDataTableHeaderHTML[$j]] = $aDataTableDetailHTML[$i][$j];
+                $aTempData[$i][$aDataTableHeaderHTML[$j]] =
+                    $aDataTableDetailHTML[$i][$j];
             }
         }
         return $aTempData;
     }
 
-    public function setCpanelUrl($url = "") {
+    private function tableToArray($html)
+    {
+        $doc = new DOMDocument();
+        $doc->loadHTML($html);
+        $table = $doc->getElementById("stats");
+        $rows = $table->getElementsByTagName("tr");
+
+        $data = [];
+
+        foreach ($rows as $row) {
+            $cols = $row->getElementsByTagName("td");
+            if ($cols->length === 2) {
+                $key = trim($cols->item(0)->nodeValue);
+                $value = trim($cols->item(1)->nodeValue);
+                $data[$key] = $value;
+            }
+        }
+
+        return $data;
+    }
+
+    public function setCpanelUrl($url = "")
+    {
         $this->checkForEmptyParams($url);
         $this->cpanelUrl = $url;
         return true;
@@ -162,32 +194,51 @@ class VistapanelApi
     public function approveNotification()
     {
         $this->checkLogin();
-        $this->simpleCurl($this->cpanelUrl . "/panel/approve.php", true, array("submit" => true), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/approve.php",
+            true,
+            ["submit" => true],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
 
-    public function disapproveNotification() {
+    public function disapproveNotification()
+    {
         $this->checkLogin();
-        $this->simpleCurl($this->cpanelUrl . "/panel/disapprove.php", true, array("submit" => false), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/disapprove.php",
+            true,
+            ["submit" => false],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
-    
-    public function login($username = "", $password = "", $theme = "PaperLantern")
-    {
+
+    public function login(
+        $username = "",
+        $password = "",
+        $theme = "PaperLantern"
+    ) {
         $this->checkCpanelUrl();
         $this->checkForEmptyParams($username, $password);
-        $login = $this->simpleCurl($this->cpanelUrl . "/login.php", true, array(
-            "uname" => $username,
-            "passwd" => $password,
-            "theme" => $theme,
-            "seeesurf" => "567811917014474432"
-        ), true, array(), true);
-        preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $login, $matches);
-        $cookies = array();
+        $login = $this->simpleCurl(
+            $this->cpanelUrl . "/login.php",
+            true,
+            [
+                "uname" => $username,
+                "passwd" => $password,
+                "theme" => $theme,
+                "seeesurf" => "567811917014474432",
+            ],
+            true,
+            [],
+            true
+        );
+        preg_match_all("/^Set-Cookie:\s*([^;]*)/mi", $login, $matches);
+        $cookies = [];
         foreach ($matches[1] as $item) {
             parse_str($item, $cookie);
             $cookies = array_merge($cookies, $cookie);
@@ -198,94 +249,123 @@ class VistapanelApi
         if (empty($cookies[$this->vistapanelSessionName])) {
             $this->classError("Unable to login.");
         }
-        if (strpos($login, "document.location.href = 'panel/indexpl.php") === false) {
+        if (
+            strpos($login, "document.location.href = 'panel/indexpl.php") ===
+            false
+        ) {
             $this->classError("Invalid login credentials.");
         }
         $this->loggedIn = true;
         $this->accountUsername = $username;
         $this->vistapanelSession = $cookies[$this->vistapanelSessionName];
-        $this->cookie = "Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession;
+        $this->cookie =
+            "Cookie: " .
+            $this->vistapanelSessionName .
+            "=" .
+            $this->vistapanelSession;
         $checkImportantNotice = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php",
             false,
-            array(),
+            [],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
-        if (!strpos(
-            $checkImportantNotice,
-            "To notify you of changes to service and offers we need permission to send you email")
-        )
-        {
+        if (
+            !strpos(
+                $checkImportantNotice,
+                "To notify you of changes to service and offers we need permission to send you email"
+            )
+        ) {
             $this->approveNotification();
         }
         return true;
     }
-    
+
     public function createDatabase($dbname = "")
     {
         $this->checkLogin();
         $this->checkForEmptyParams($dbname);
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create", true, array(
-            "db" => $dbname
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create",
+            true,
+            [
+                "db" => $dbname,
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
 
     public function listDatabases()
     {
-        $databases = array();
-        $aDataTableDetailHTML = $this->getTableElements($this->cpanelUrl . "/panel/indexpl.php?option=pma");
+        $databases = [];
+        $aDataTableDetailHTML = $this->getTableElements(
+            $this->cpanelUrl . "/panel/indexpl.php?option=pma"
+        );
         foreach ($aDataTableDetailHTML as $database) {
-            $databases[str_replace($this->accountUsername . "_", "", array_shift($database))] = true;
+            $databases[
+                str_replace(
+                    $this->accountUsername . "_",
+                    "",
+                    array_shift($database)
+                )
+            ] = true;
         }
         return $databases;
     }
-    
+
     public function deleteDatabase($database = "")
     {
         $this->checkLogin();
         $this->checkForEmptyParams($database);
         if (!in_array($database, $this->listDatabases())) {
-            $this->classError("The database you're trying to remove doesn't exist.");
+            $this->classError(
+                "The database you're trying to remove doesn't exist."
+            );
         }
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=remove", true, array(
-            "toremove" => $this->accountUsername . "_" . $database,
-            "Submit2" => "Remove Database"
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=remove",
+            true,
+            [
+                "toremove" => $this->accountUsername . "_" . $database,
+                "Submit2" => "Remove Database",
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
-    
+
     public function getPhpmyadminLink($database = "")
     {
         $this->checkLogin();
         $this->checkForEmptyParams($database);
         if (!array_key_exists($database, $this->listDatabases())) {
-            $this->classError("The database you're trying to get the PMA link of doesn't exist.");
+            $this->classError(
+                "The database you're trying to get the PMA link of doesn't exist."
+            );
         }
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=pma",
             false,
-            array(),
+            [],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
-        $dom = new DOMDocument;
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
         $dom->loadHTML($htmlContent);
         libxml_clear_errors();
-        $links = $dom->getElementsByTagName('a');
+        $links = $dom->getElementsByTagName("a");
         foreach ($links as $link) {
-            if (strpos($link->getAttribute('href'), "&db=" . $this->accountUsername . "_" . $database) !== false) {
-                return $link->getAttribute('href');
+            if (
+                strpos(
+                    $link->getAttribute("href"),
+                    "&db=" . $this->accountUsername . "_" . $database
+                ) !== false
+            ) {
+                return $link->getAttribute("href");
             }
         }
     }
@@ -314,9 +394,11 @@ class VistapanelApi
                 $id = "sql_db_tbl";
                 break;
         }
-        $domains = array();
+        $domains = [];
         $aDataTableDetailHTML = $this->getTableElements(
-            $this->cpanelUrl . "/panel/indexpl.php?option={$option}&ttt=" . $this->getToken(),
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option={$option}&ttt=" .
+                $this->getToken(),
             $id
         );
         foreach ($aDataTableDetailHTML as $domain) {
@@ -329,19 +411,23 @@ class VistapanelApi
     {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname, $target);
-        $response = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=redirect_add", true, array(
-            "domain_name" => $domainname,
-            "redirect_url" => $target
-
-        ), false, array(
-            $this->cookie
-        ), true);
-        if (strpos(
-            $response,
-            "The redirect url {$target} does not appear to be a URL (it MUST start with http:// or http:// ! )")
-            !== false
-        )
-        {
+        $response = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=redirect_add",
+            true,
+            [
+                "domain_name" => $domainname,
+                "redirect_url" => $target,
+            ],
+            false,
+            [$this->cookie],
+            true
+        );
+        if (
+            strpos(
+                $response,
+                "The redirect url {$target} does not appear to be a URL (it MUST start with http:// or http:// ! )"
+            ) !== false
+        ) {
             $this->classError(
                 "The redirect url {$target} does not appear to be a URL. Make sure it starts with http:// or https://"
             );
@@ -354,27 +440,63 @@ class VistapanelApi
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
         $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=redirect_rem&domain=" . $domainname . "&redirect_url=http://",
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=redirect_rem&domain=" .
+                $domainname .
+                "&redirect_url=http://",
             true,
-            array(),
+            [],
             false,
-            array($this->cookie)
+            [$this->cookie]
         );
         return true;
     }
-    
+    public function showRedirect($domainname = "")
+    {
+        /* Returns the URL that has been set for an redirect. */
+        $this->checkLogin();
+        if (empty($domainname)) {
+            $this->classError("domainname is required.");
+        }
+
+        $htmlContent = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=redirect_configure",
+            true,
+            [
+                "domain_name" => $domainname,
+            ],
+            false,
+            [$this->cookie]
+        );
+
+        // if (strpos($htmlContent, "currently has no redirects in place.") === false)
+        // {
+        $xpath = '//*[@id="content"]/div/div[1]/table/tbody/tr[2]/td[1]/b[2]';
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+
+        $domxpath = new DOMXPath($dom);
+
+        $values = $domxpath->query($xpath);
+        return $values->item(0)->nodeValue;
+        // } else {
+        //      return false;
+        //  }
+    }
+
     public function getPrivateKey($domainname = "")
     {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
         $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=sslconfigure&domain_name=" .
+                $domainname,
             false,
-            array(),
+            [],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -391,13 +513,13 @@ class VistapanelApi
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
         $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=sslconfigure&domain_name=" . $domainname,
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=sslconfigure&domain_name=" .
+                $domainname,
             false,
-            array(),
+            [],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -408,19 +530,22 @@ class VistapanelApi
         $certificates = $xpath->query("//textarea[@name='cert']");
         return $certificates->item(0)->nodeValue;
     }
-    
+
     public function uploadPrivateKey($domainname = "", $key = "", $csr = "")
     {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname, $key);
-        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php", true, array(
-            "domain_name" => $domainname,
-            "csr" => $csr,
-            "key" => $key
-            
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadkey.php",
+            true,
+            [
+                "domain_name" => $domainname,
+                "csr" => $csr,
+                "key" => $key,
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
 
@@ -428,13 +553,16 @@ class VistapanelApi
     {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname, $cert);
-        $this->simpleCurl($this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php", true, array(
-            "domain_name" => $domainname,
-            "cert" => $cert
-            
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/sslconfigure/uploadcert.php",
+            true,
+            [
+                "domain_name" => $domainname,
+                "cert" => $cert,
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
 
@@ -443,13 +571,16 @@ class VistapanelApi
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
         $this->simpleCurl(
-            $this->cpanelUrl . "/panel/modules-new/sslconfigure/deletecert.php" .
-            "?domain_name=" . $domainname .
-            "&username=" . $this->accountUsername,
+            $this->cpanelUrl .
+                "/panel/modules-new/sslconfigure/deletecert.php" .
+                "?domain_name=" .
+                $domainname .
+                "&username=" .
+                $this->accountUsername,
             false,
-            array(),
+            [],
             false,
-            array($this->cookie)
+            [$this->cookie]
         );
         return true;
     }
@@ -458,16 +589,16 @@ class VistapanelApi
     {
         $this->checkLogin();
         $getlink = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=installer&ttt=" . $this->getToken(),
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=installer&ttt=" .
+                $this->getToken(),
             false,
-            array(),
+            [],
             true,
-            array(
-                $this->cookie
-            ),
+            [$this->cookie],
             true
         );
-        if (preg_match('~Location: (.*)~i', $getlink, $match)) {
+        if (preg_match("~Location: (.*)~i", $getlink, $match)) {
             $location = trim($match[1]);
         }
         return $location;
@@ -484,13 +615,11 @@ class VistapanelApi
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=errorpages_configure",
             true,
-            array(
-                "domain_name" => $domainname
-            ),
+            [
+                "domain_name" => $domainname,
+            ],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -509,26 +638,25 @@ class VistapanelApi
         $value403 = "",
         $value404 = "",
         $value503 = ""
-    )
-    {
+    ) {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=errorpages_change", true, array(
-            "domain_name" => $domainname,
-            "400" => $value400,
-            "401" => $value401,
-            "403" => $value403,
-            "404" => $value404,
-            "503" => $value503
-            
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=errorpages_change",
+            true,
+            [
+                "domain_name" => $domainname,
+                "400" => $value400,
+                "401" => $value401,
+                "403" => $value403,
+                "404" => $value404,
+                "503" => $value503,
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
-    
-
-
 
     public function showPHPConfig($domainname = "", $option = "display_errors")
     {
@@ -536,28 +664,27 @@ class VistapanelApi
          * Available options: "display_errors", "mbstring_http_input", "date_timezone". Returns displayerror if no option is given.
 
             Returning Values:
-            display_errors: true(Enabled)/false(Disabled) (Boolean) 
+            display_errors: true - Enabled /false - Disabled (Boolean)
             mbstring_http_input: Value (String)
             date_timezone: Timezone (String)
 
          */
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
-        if ($option!=="date_timezone") {
+        if ($option !== "date_timezone") {
             $xpath = '//input[@name="' . $option . '"]';
         } else {
             $xpath = "//select[@name='date_timezone']/option[@selected]";
         }
         $htmlContent = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=phpchangeconfig_configure",
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=phpchangeconfig_configure",
             true,
-            array(
-                "domain_name" => $domainname
-            ),
+            [
+                "domain_name" => $domainname,
+            ],
             false,
-            array(
-                $this->cookie
-            )
+            [$this->cookie]
         );
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -566,11 +693,11 @@ class VistapanelApi
         $domxpath = new DOMXPath($dom);
 
         $values = $domxpath->query($xpath);
-        if ($option=="mbstring_http_input") {
+        if ($option == "mbstring_http_input") {
             return $values->item(0)->getAttribute("value");
-        } else if ($option=="display_errors") {
+        } elseif ($option == "display_errors") {
             return $values->item(1)->getAttribute("checked");
-        } else if ($option=="date_timezone") {
+        } elseif ($option == "date_timezone") {
             return $values->item(0)->nodeValue;
         }
     }
@@ -580,69 +707,89 @@ class VistapanelApi
         $displayerrors = "",
         $mbstringinput = "",
         $timezone = ""
-    )
-    {
+    ) {
         $this->checkLogin();
         $this->checkForEmptyParams($domainname);
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=phpchangeconfig_change", true, array(
-            "domain_name" => $domainname,
-            "display_errors" => $displayerrors,
-            "mbstring_http_input" => $mbstringinput,
-            "date_timezone" => $timezone,
-            
-        ), false, array(
-            $this->cookie
-        ));
+        $this->simpleCurl(
+            $this->cpanelUrl .
+                "/panel/indexpl.php?option=phpchangeconfig_change",
+            true,
+            [
+                "domain_name" => $domainname,
+                "display_errors" => $displayerrors,
+                "mbstring_http_input" => $mbstringinput,
+                "date_timezone" => $timezone,
+            ],
+            false,
+            [$this->cookie]
+        );
         return true;
     }
-    
 
-
-
-
-
- public function getUserStats()
-  {
-
-    function tableToArray($html)
+    public function getUserStats($option = "")
     {
-      $doc = new DOMDocument();
-      $doc->loadHTML($html);
-      $table = $doc->getElementById("stats");
-      $rows = $table->getElementsByTagName('tr');
+        /*
+        $option: String Variable
+            - Use exactly VistaPanel Statistics text. *CASE SENSITIVE*
+                e.g. "Plan", "Disk Space Used"
 
-      $data = array();
+        Returns every statistics in an array if not provided
 
-      foreach ($rows as $row) {
-        $cols = $row->getElementsByTagName('td');
-        if ($cols->length === 2) {
 
-          $key = trim($cols->item(0)->nodeValue);
-          $value = trim($cols->item(1)->nodeValue);
-          $data[$key] = $value;
+    */
+        if (!empty($option)) {
+            $phpversion = phpversion();
+            if (strpos($phpversion, "8.") != false) {
+                if (str_ends_with($option, ":") == false) {
+                    $option = $option . ":";
+                }
+            } else {
+                if (strpos($option, ":") == false) {
+                    $option = $option . ":";
+                }
+            }
         }
-      }
 
-      return $data;
+        $stats = $this->tableToArray(
+            $this->simpleCurl(
+                $this->cpanelUrl . "/panel/indexpl.php",
+                true,
+                null,
+                false,
+                [$this->cookie]
+            )
+        );     
+        
+
+        $stats["MySQL Databases:"] = substr($stats["MySQL Databases:"], 0, -1);
+        $stats["Parked Domains:"] = substr($stats["Parked Domains:"], 0, -1);
+        $stats["Bandwidth used:"] = preg_replace('/MB\\n.{1,50}/i', 'MB', $stats["Bandwidth used:"]);
+
+        $stats = preg_replace('/\\\n.{1,20}",/i', '",', json_encode($stats));
+        $stats = json_decode($stats,true);
+
+        if (empty($option)) {
+            return $stats;
+        } else {
+            return $stats[$option];
+        }
     }
-
-    return tableToArray($this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", true, null, false, array(
-      $this->cookie
-    )));
-  }
-
 
     public function logout()
     {
         $this->checkLogin();
-        $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php?option=signout", false, array(), false, array(
-            $this->cookie
-        ), true);
+        $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=signout",
+            false,
+            [],
+            false,
+            [$this->cookie],
+            true
+        );
         $this->loggedIn = false;
         $this->vistapanelSession = "";
         $this->accountUsername = "";
         $this->cookie = "";
         return true;
     }
-    
 }
