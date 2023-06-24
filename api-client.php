@@ -136,14 +136,6 @@ class VistapanelApi
             $header = $dom->getElementById($id)->getElementsByTagName("th");
             $detail = $dom->getElementById($id)->getElementsByTagName("td");
         }
-        /*if (!(empty($td_class))) {
-            $dom1 = new DOMDocument();
-            libxml_use_internal_errors(true);
-            $dom1->loadHTML($detail->nodeValue);
-            libxml_clear_errors();
-            $dom1xpath = new DOMXPath($dom);
-            $detail = $dom1xpath->query("td[@class='". $td_class . "']");
-        }*/
         foreach ($header as $nodeHeader) {
             $aDataTableHeaderHTML[] = trim($nodeHeader->textContent);
         }
