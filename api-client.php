@@ -280,9 +280,7 @@ class VistapanelApi
         $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=mysql&cmd=create",
             true,
-            [
-                "db" => $dbname,
-            ],
+            ["db" => $dbname],
             false,
             [$this->cookie]
         );
@@ -297,12 +295,9 @@ class VistapanelApi
         );
         foreach ($aDataTableDetailHTML as $database) {
             $databases[
-                str_replace(
-                    $this->accountUsername . "_",
-                    "",
-                    array_shift($database)
-                )
-            ] = true;
+                str_replace($this->accountUsername . "_", "", array_shift($database)
+                           )
+                ] = true;
         }
         return $databases;
     }
@@ -607,9 +602,7 @@ class VistapanelApi
         $htmlContent = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=errorpages_configure",
             true,
-            [
-                "domain_name" => $domainname,
-            ],
+            ["domain_name" => $domainname,],
             false,
             [$this->cookie]
         );
