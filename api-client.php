@@ -757,6 +757,48 @@ class VistapanelApi
         }
     }
 
+     public function getCNAMErecords()
+   {
+    /*
+    Returns an array with the CNAME.
+      - The first key (key 0) is useless, remove it on your own frontend code.
+
+    It returns array as "Record" and "Destination" as the key.
+    */
+
+    $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=cnamerecords&ttt=" . $this->getToken(),
+            false,
+            null,
+            false,
+            [$this->cookie]
+        );
+
+    $dom = new DOMDocument();
+    $dom->loadHTML($html);
+
+    $rows = $dom->getElementsByTagName('tr');
+
+    $array = array();
+    for ($i = 2; $i < $rows->length; $i++) {
+        $row = $rows->item($i);
+        $cols = $row->getElementsByTagName('td');
+
+        $cname = $cols->item(0)->nodeValue;
+        $destination = $cols->item(1)->nodeValue;
+
+        $array[] = array(
+            'Record' => $cname,
+            'Destination' => $destination,
+        );
+    }
+
+    return $array;
+}
+
+
+
+    
     public function logout()
     {
         $this->checkLogin();
