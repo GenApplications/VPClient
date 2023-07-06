@@ -796,7 +796,86 @@ class VistapanelApi
     return $array;
 }
 
+public function createCNAMErecord($source, $domain, $dest) {
+        /*
+        $source: CNAME Source
+        $domain: CNAME Domain
+        $dest: CNAME Destination
 
+        returns true only.
+        */
+
+        $this->checkLogin();
+        $this->checkForEmptyParams($source, $domain, $dest);
+        $response = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/cnamerecords/add.php",
+            true,
+            [
+                "source" => $source,
+                "d_name" => $domain,
+                "destination" => $dest,
+            ],
+            false,
+            [$this->cookie],
+            true
+        );
+        if (
+            strpos(
+                $response,
+                "Duplicated CNAME records detected for the CNAME hostname."
+            ) !== false
+        ) {
+            $this->classError(
+                "Duplicated CNAME Record detected, please delete the old one first."
+            );
+        }
+        return true;
+
+    }
+
+    private function getCNAMEDeletionlink($source)
+    {
+        $this->checkLogin();
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=cnamerecords&ttt=" . $this->getToken(),
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+        libxml_clear_errors();
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $anchorTags = $dom->getElementsByTagName('a');
+
+        foreach ($anchorTags as $anchorTag) {
+             if (strpos($anchorTag->getAttribute('href'), '?site=' . $source) != false) {
+                 return $anchorTag->getAttribute('href');
+             }
+    
+        }   
+
+    }
+
+
+    public function deleteCNAMErecord($source) {
+        /* $source: The record source */
+        $this->checkLogin();
+        $link = $this->getCNAMEDeletionlink($source);
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . '/panel/' . $link,
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+
+        return true;
+    }
 
     
     public function logout()
