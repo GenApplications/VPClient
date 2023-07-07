@@ -765,7 +765,7 @@ class VistapanelApi
 
     It returns array as "Record" and "Destination" as the key.
     */
-
+    $this->checkLogin();
     $html = $this->simpleCurl(
             $this->cpanelUrl . "/panel/indexpl.php?option=cnamerecords&ttt=" . $this->getToken(),
             false,
@@ -794,9 +794,10 @@ class VistapanelApi
     }
 
     return $array;
-}
+   }
+    
 
-public function createCNAMErecord($source, $domain, $dest) {
+    public function createCNAMErecord($source, $domain, $dest) {
         /*
         $source: CNAME Source
         $domain: CNAME Domain
@@ -877,7 +878,278 @@ public function createCNAMErecord($source, $domain, $dest) {
         return true;
     }
 
+ public function getMXrecords()
+   {
+    /*
+    Returns an array with the MX.
+      - The first key (key 0) is useless, remove it on your own frontend code.
+
+    It returns array as "Record" and "Destination" as the key.
+    */
+    $this->checkLogin();
+    $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=mxrecords&ttt=" . $this->getToken(),
+            false,
+            null,
+            false,
+            [$this->cookie]
+        );
+
+    $dom = new DOMDocument();
+    $dom->loadHTML($html);
+
+    $rows = $dom->getElementsByTagName('tr');
+
+    $array = array();
+    for ($i = 2; $i < $rows->length; $i++) {
+        $row = $rows->item($i);
+        $cols = $row->getElementsByTagName('td');
+
+        $domain = $cols->item(0)->nodeValue;
+        $mx = $cols->item(1)->nodeValue;
+        $priority = $cols->item(2)->nodeValue;
+        $array[] = array(
+            'Domain' => $domain,
+            'MX' => $mx,
+            'Priority' => $priority,
+        );
+    }
+
+    return $array;
+   }
     
+
+    public function createMXrecord($domain, $server, $priority) {
+        /*
+        $source: MX Source
+        $domain: MX Domain
+        $dest: MX Destination
+
+        returns true only.
+        */
+
+        $this->checkLogin();
+        $this->checkForEmptyParams($domain, $server, $priority);
+        $response = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/mxrecords/add.php",
+            true,
+            [
+                "d_name" => $domain,
+                "Data" => $server,
+                "Preference" => $priority,
+            ],
+            false,
+            [$this->cookie],
+            true
+        );
+      /*  FAKE, IDK THE MX ERRORS, CONTRIBUTION APPRECIATED
+      if (
+            strpos(
+                $response,
+                "Duplicated MX records detected for the MX hostname."
+            ) !== false
+        ) {
+            $this->classError(
+                "Duplicated MX Record detected, please delete the old one first."
+            );
+        }*/
+        return true;
+
+    }
+
+    private function getMXDeletionlink($domain, $srv, $priority)
+    {
+        $this->checkLogin();
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=mxrecords&ttt=" . $this->getToken(),
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+        libxml_clear_errors();
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $anchorTags = $dom->getElementsByTagName('a');
+
+        foreach ($anchorTags as $anchorTag) {
+             if (
+             
+                (strpos($anchorTag->getAttribute('href'), '?site=' . $domain) !== false) 
+                and  
+                (strpos($anchorTag->getAttribute('href'), '&data=' . $srv) !== false) 
+                and
+                (strpos($anchorTag->getAttribute('href'), '&aux=' . $priority) !== false) 
+             
+             )
+             
+             {
+                 return $anchorTag->getAttribute('href');
+             }
+    
+        }   
+
+    }
+
+
+
+    public function deleteMXrecord($domain, $srv, $priority) {
+        /* $domain: The record domain
+           $srv: the MX Server
+           $priority:  MX Priority
+            */
+        $this->checkLogin();
+        $link = $this->getMXDeletionlink($domain, $srv, $priority);
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . '/panel/' . $link,
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+
+        return true;
+    }
+
+    
+
+    public function getSPFrecords()
+   {
+    /*
+    Returns an array with the SPF.
+      - The first key (key 0) is useless, remove it on your own frontend code.
+
+    It returns array as "Record" and "Destination" as the key.
+    */
+    $this->checkLogin();
+    $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=spfrecords&ttt=" . $this->getToken(),
+            false,
+            null,
+            false,
+            [$this->cookie]
+        );
+
+    $dom = new DOMDocument();
+    $dom->loadHTML($html);
+
+    $rows = $dom->getElementsByTagName('tr');
+
+    $array = array();
+    for ($i = 2; $i < $rows->length; $i++) {
+        $row = $rows->item($i);
+        $cols = $row->getElementsByTagName('td');
+
+        $domain = $cols->item(0)->nodeValue;
+        $data = $cols->item(1)->nodeValue;
+        $array[] = array(
+            'Domain' => $domain,
+            'Data' => $data,
+        );
+    }
+
+    return $array;
+   }
+    
+
+    public function createSPFrecord($domain, $data) {
+        /*
+        $source: SPF Source
+        $domain: SPF Domain
+        $dest: SPF Destination
+
+        returns true only.
+        */
+
+        $this->checkLogin();
+        $this->checkForEmptyParams($domain, $data);
+        $response = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/modules-new/spfrecords/add.php",
+            true,
+            [
+                "d_name" => $domain,
+                "Data" => $data,
+            ],
+            false,
+            [$this->cookie],
+            true
+        );
+      /*  FAKE, IDK THE SPF ERRORS, CONTRIBUTION APPRECIATED
+      if (
+            strpos(
+                $response,
+                "Duplicated SPF records detected for the SPF hostname."
+            ) !== false
+        ) {
+            $this->classError(
+                "Duplicated SPF Record detected, please delete the old one first."
+            );
+        }*/
+        return true;
+
+    }
+
+    private function getSPFDeletionlink($domain, $data)
+    {
+        $this->checkLogin();
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . "/panel/indexpl.php?option=spfrecords&ttt=" . $this->getToken(),
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($htmlContent);
+        libxml_clear_errors();
+
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $anchorTags = $dom->getElementsByTagName('a');
+
+        foreach ($anchorTags as $anchorTag) {
+             if (
+             
+                (strpos($anchorTag->getAttribute('href'), '?site=' . $domain) !== false) 
+                and  
+                (strpos($anchorTag->getAttribute('href'), '&data=' . $data) !== false) 
+             
+             )
+             
+             {
+                 return $anchorTag->getAttribute('href');
+             }
+    
+        }   
+
+    }
+
+
+
+    public function deleteSPFrecord($domain, $data) {
+        /* $domain: The record domain
+           $data: the SPF data
+            */
+        $this->checkLogin();
+        $link = $this->getSPFDeletionlink($domain, $data);
+        $html = $this->simpleCurl(
+            $this->cpanelUrl . '/panel/' . $link,
+            false,
+            [],
+            false,
+            [$this->cookie]
+        );
+
+        return true;
+    }
+
+
+
     public function logout()
     {
         $this->checkLogin();
