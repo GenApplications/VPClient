@@ -61,7 +61,7 @@ class VistapanelApi
 
     private function classError($error)
     {
-        die("VistapanelApi_Error: " . $error);
+       throw new Exception("VistapanelApi_Error: " . $error);
     }
     
     private function checkCpanelUrl()
