@@ -57,15 +57,12 @@ class VistapanelApi
         return $result;
     }
 
-    private function classError($error)
-    {
-       throw new Exception("VistapanelApi_Error: " . $error);
-    }
+ 
 
     private function checkCpanelUrl()
     {
         if (empty($this->cpanelUrl)) {
-            $this->classError("Please set cpanelUrl first.");
+            throw new Exception("Please set cpanelUrl first.");
         }
         if (substr($this->cpanelUrl, -1) == "/") {
             $this->cpanelUrl = substr_replace($this->cpanelUrl, "", -1);
@@ -77,7 +74,7 @@ class VistapanelApi
     {
         $this->checkCpanelUrl();
         if (!$this->loggedIn) {
-            $this->classError("Not logged in.");
+            throw new Exception("Not logged in.");
         }
         return true;
     }
@@ -91,7 +88,7 @@ class VistapanelApi
 
         foreach ($params as $index => $parameter) {
             if (empty($parameter)) {
-                $this->classError(
+                throw new Exception(
                     $parameters[$index]->getName() . " is required."
                 );
             }
@@ -236,16 +233,16 @@ class VistapanelApi
             $cookies = array_merge($cookies, $cookie);
         }
         if ($this->loggedIn === true) {
-            $this->classError("You are already logged in.");
+         throw new Exception("You are already logged in.");
         }
         if (empty($cookies[$this->vistapanelSessionName])) {
-            $this->classError("Unable to login.");
+            throw new Exception("Unable to login.");
         }
         if (
             strpos($login, "document.location.href = 'panel/indexpl.php") ===
             false
         ) {
-            $this->classError("Invalid login credentials.");
+         throw new Exception("Invalid login credentials.");
         }
         $this->loggedIn = true;
         $this->accountUsername = $username;
@@ -306,7 +303,7 @@ class VistapanelApi
         $this->checkLogin();
         $this->checkForEmptyParams($database);
         if (!in_array($database, $this->listDatabases())) {
-            $this->classError(
+            throw new Exception(
                 "The database you're trying to remove doesn't exist."
             );
         }
@@ -328,7 +325,7 @@ class VistapanelApi
         $this->checkLogin();
         $this->checkForEmptyParams($database);
         if (!array_key_exists($database, $this->listDatabases())) {
-            $this->classError(
+        throw new Exception(
                 "The database you're trying to get the PMA link of doesn't exist."
             );
         }
@@ -414,7 +411,7 @@ class VistapanelApi
                 "The redirect url {$target} does not appear to be a URL (it MUST start with http:// or http:// ! )"
             ) !== false
         ) {
-            $this->classError(
+            throw new Exception(
                 "The redirect url {$target} does not appear to be a URL. Make sure it starts with http:// or https://"
             );
         }
@@ -442,7 +439,7 @@ class VistapanelApi
         /* Returns the URL that has been set for an redirect. */
         $this->checkLogin();
         if (empty($domainname)) {
-            $this->classError("domainname is required.");
+        throw new Exception("domainname is required.");
         }
 
         $htmlContent = $this->simpleCurl(
@@ -826,7 +823,7 @@ class VistapanelApi
                 "Duplicated CNAME records detected for the CNAME hostname."
             ) !== false
         ) {
-            $this->classError(
+            throw new Exception(
                 "Duplicated CNAME Record detected, please delete the old one first."
             );
         }
