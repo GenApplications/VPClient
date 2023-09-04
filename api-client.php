@@ -246,7 +246,7 @@ class VistapanelApi
         }
         if (
             strpos($login, "document.location.href = 'panel/indexpl.php") ===
-            false
+            true
         ) {
          throw new Exception("Invalid login credentials.");
         }
