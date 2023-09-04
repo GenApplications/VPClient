@@ -240,13 +240,13 @@ class VistapanelApi
         }
         if (
             strpos($login, "document.location.href = 'panel/index_pl_sus.php") ===
-            false
+            true
         ) {
          throw new Exception("Your account is suspended.");
         }
         if (
             strpos($login, "document.location.href = 'panel/indexpl.php") ===
-            true
+            false
         ) {
          throw new Exception("Invalid login credentials.");
         }
