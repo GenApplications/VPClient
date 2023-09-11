@@ -239,8 +239,8 @@ class VistapanelApi
             throw new Exception("Unable to login.");
         }
         if (
-            strpos($login, "document.location.href = 'panel/index_pl_sus.php") ===
-            true
+            strpos($login, "document.location.href = 'panel/index_pl_sus.php") !==
+            false
         ) {
          throw new Exception("Your account is suspended.");
         }
