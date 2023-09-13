@@ -57,8 +57,6 @@ class VistapanelApi
         return $result;
     }
 
- 
-
     private function checkCpanelUrl()
     {
         if (empty($this->cpanelUrl)) {
@@ -233,7 +231,7 @@ class VistapanelApi
             $cookies = array_merge($cookies, $cookie);
         }
         if ($this->loggedIn === true) {
-         throw new Exception("You are already logged in.");
+            throw new Exception("You are already logged in.");
         }
         if (empty($cookies[$this->vistapanelSessionName])) {
             throw new Exception("Unable to login.");
@@ -242,13 +240,13 @@ class VistapanelApi
             strpos($login, "document.location.href = 'panel/index_pl_sus.php") !==
             false
         ) {
-         throw new Exception("Your account is suspended.");
+            throw new Exception("Your account is suspended.");
         }
         if (
             strpos($login, "document.location.href = 'panel/indexpl.php") ===
             false
         ) {
-         throw new Exception("Invalid login credentials.");
+            throw new Exception("Invalid login credentials.");
         }
         $this->loggedIn = true;
         $this->accountUsername = $username;
@@ -272,6 +270,16 @@ class VistapanelApi
             )
         ) {
             $this->approveNotification();
+        }
+        return true;
+    }
+
+    public function setSession($session = "") 
+    {
+        $this->checkForEmptyParams($session);
+        $this->$vistapanelSession = $session;
+        if (!$this->loggedIn) {
+            $this->loggedIn = true;
         }
         return true;
     }
@@ -440,6 +448,7 @@ class VistapanelApi
         );
         return true;
     }
+
     public function showRedirect($domainname = "")
     {
         /* Returns the URL that has been set for an redirect. */
@@ -798,7 +807,6 @@ class VistapanelApi
 
     return $array;
    }
-    
 
     public function createCNAMErecord($source, $domain, $dest) {
         /*
@@ -865,7 +873,6 @@ class VistapanelApi
 
     }
 
-
     public function deleteCNAMErecord($source) {
         /* $source: The record source */
         $this->checkLogin();
@@ -920,7 +927,6 @@ class VistapanelApi
 
     return $array;
    }
-    
 
     public function createMXrecord($domain, $server, $priority) {
         /*
@@ -998,8 +1004,6 @@ class VistapanelApi
 
     }
 
-
-
     public function deleteMXrecord($domain, $srv, $priority) {
         /* $domain: The record domain
            $srv: the MX Server
@@ -1017,8 +1021,6 @@ class VistapanelApi
 
         return true;
     }
-
-    
 
     public function getSPFrecords()
    {
@@ -1057,7 +1059,6 @@ class VistapanelApi
 
     return $array;
    }
-    
 
     public function createSPFrecord($domain, $data) {
         /*
@@ -1132,8 +1133,6 @@ class VistapanelApi
 
     }
 
-
-
     public function deleteSPFrecord($domain, $data) {
         /* $domain: The record domain
            $data: the SPF data
@@ -1150,8 +1149,6 @@ class VistapanelApi
 
         return true;
     }
-
-
 
     public function logout()
     {
