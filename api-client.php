@@ -1022,22 +1022,17 @@ class VistapanelApi
         return true;
     }
 
-    public function getSPFrecords()
-   {
-    /*
-    Returns an array with the SPF.
-      - The first key (key 0) is useless, remove it on your own frontend code.
+public function getSPFrecords()
+{
 
-    It returns array as "Record" and "Destination" as the key.
-    */
     $this->checkLogin();
     $html = $this->simpleCurl(
-            $this->cpanelUrl . "/panel/indexpl.php?option=spfrecords&ttt=" . $this->getToken(),
-            false,
-            null,
-            false,
-            [$this->cookie]
-        );
+        $this->cpanelUrl . "/panel/indexpl.php?option=spfrecords&ttt=" . $this->getToken(),
+        false,
+        null,
+        false,
+        [$this->cookie]
+    );
 
     $dom = new DOMDocument();
     $dom->loadHTML($html);
@@ -1045,8 +1040,13 @@ class VistapanelApi
     $rows = $dom->getElementsByTagName('tr');
 
     $array = array();
-    for ($i = 2; $i < $rows->length; $i++) {
-        $row = $rows->item($i);
+    $skipFirst = true; // Flag to skip the first row
+    foreach ($rows as $row) {
+        if ($skipFirst) {
+            $skipFirst = false;
+            continue; // Skip the first row
+        }
+        
         $cols = $row->getElementsByTagName('td');
 
         $domain = $cols->item(0)->nodeValue;
@@ -1058,7 +1058,7 @@ class VistapanelApi
     }
 
     return $array;
-   }
+}
 
     public function createSPFrecord($domain, $data) {
         /*
@@ -1149,6 +1149,59 @@ class VistapanelApi
 
         return true;
     }
+
+public function changeEmail($newEmail, $confirmEmail)
+{
+    $this->checkLogin();
+    $url = $this->cpanelUrl . "/panel/indexpl.php?option=changeemail&ttt=" . $this->getToken();
+
+    // Prepare the POST data
+    $postData = [
+        "ttt" => $this->getToken(),
+        "newemail" => $newEmail,
+        "confemail" => $confirmEmail,
+    ];
+
+    // Send the POST request using simpleCurl
+    $response = $this->simpleCurl($url, true, $postData, false, [$this->cookie]);
+
+    // Check if the response URL contains the error page URL
+    if (strpos($response['url'], $this->cpanelUrl . "/panel/indexpl.php?option=error") !== false) {
+        throw new Exception("Email change failed.");
+    } else {
+        return true;
+    }
+}
+public function addPasswordProtectionToFolder($domainName, $folderName, $password)
+{
+    // Check if the user is logged in
+    $this->checkLogin();
+
+    // Prepare the data for the POST request
+    $postData = [
+        'folder' => $folderName,
+        'domain_name' => $domainName,
+        'password' => $password,
+    ];
+
+    // Perform the POST request to add password protection
+    $response = $this->simpleCurl(
+        $this->cpanelUrl . '/panel/indexpl.php?option=protectedfolders_configure_2',
+        true, // POST request
+        $postData,
+        false,
+        [$this->cookie]
+    );
+
+    // Check if the operation was successful (you may need to customize this check based on the response)
+    if (strpos($response, 'Password protection added successfully') !== false) {
+        return true; // Protection added successfully
+    } else {
+        return false; // Failed to add protection
+    }
+}
+
+
 
     public function logout()
     {
