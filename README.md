@@ -1,6 +1,6 @@
 # GenerateClient
 
-A VistaPanel API client in PHP.
+GenerateClient is a VistaPanel API client in PHP. It can be used to build custom control panels.
 
 VistaPanel is a web hosting control panel that allows users to manage their websites, databases, and other aspects of their hosting environment.  
 A VistaPanel API client is a program that can interact with VistaPanel using the VistaPanel API (Application Programming Interface). The API provides a set of methods that can be used to manage various aspects of the hosting environment programmatically.
