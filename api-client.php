@@ -1201,6 +1201,67 @@ public function addPasswordProtectionToFolder($domainName, $folderName, $passwor
     }
 }
 
+public function createDNSRecord($recordType, $domain, $data, $destination = null, $priority = null) {
+    /*
+    $recordType: Type of DNS record (e.g., "MX," "SPF," or "CNAME")
+    $domain: Domain name
+    $data: Record data (e.g., mail server for MX, SPF data, or CNAME alias)
+    $destination: Destination (only applicable for CNAME records)
+    $priority: Priority (only applicable for MX records)
+
+    returns true only.
+    */
+
+    $this->checkLogin();
+    $this->checkForEmptyParams($domain, $data);
+
+    // Define the API endpoint based on the record type
+    switch ($recordType) {
+        case 'MX':
+            $endpoint = $this->cpanelUrl . "/panel/modules-new/mxrecords/add.php";
+            break;
+        case 'SPF':
+            $endpoint = $this->cpanelUrl . "/panel/modules-new/spfrecords/add.php";
+            break;
+        case 'CNAME':
+            $endpoint = $this->cpanelUrl . "/panel/modules-new/cnamerecords/add.php";
+            break;
+        default:
+            throw new Exception("Unsupported record type: {$recordType}");
+    }
+
+    // Prepare the data for the API request
+    $requestData = [
+        "d_name" => $domain,
+        "Data" => $data,
+    ];
+
+    if ($recordType === 'MX' && !is_null($priority)) {
+        $requestData["Preference"] = $priority;
+    }
+
+    if ($recordType === 'CNAME' && !is_null($destination)) {
+        $requestData["Cname"] = $destination;
+    }
+
+    $response = $this->simpleCurl(
+        $endpoint,
+        true,
+        $requestData,
+        false,
+        [$this->cookie],
+        true
+    );
+
+    /* Handle error messages if needed (uncomment and modify as required) */
+    /*
+    if (strpos($response, "Duplicated {$recordType} records detected for the {$recordType} hostname.") !== false) {
+        $this->classError("Duplicated {$recordType} Record detected, please delete the old one first.");
+    }
+    */
+
+    return true;
+}
 
 
 
