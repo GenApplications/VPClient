@@ -14,7 +14,6 @@ The VistaPanel Users API allows you to interact with the VistaPanel hosting cont
 ### Properties
 
 - `cpanelUrl`: The URL of the VistaPanel control panel.
-- `whmUrl`: The URL of the VistaPanel Admin control panel.
 - `loggedIn`: Indicates whether the user is logged in or not.
 - `vistapanelSession`: The session ID obtained after logging in.
 - `vistapanelSessionName`: The name of the session cookie.
