@@ -7,9 +7,6 @@ error_reporting(E_ERROR | E_PARSE);
 class VistapanelApi
 {
     private $cpanelUrl = "https://cpanel.byethost.com";
-    private $whmUrl = "https://panel.myownfreehost.net";
-    private $whmApiKey = "your_whm_api_key_here";
-    private $whmApiUser = "your_whm_api_user_here";
     private $loggedIn = false;
     private $vistapanelSession = "";
     private $vistapanelSessionName = "PHPSESSID";
@@ -1205,47 +1202,7 @@ public function addPasswordProtectionToFolder($domainName, $folderName, $passwor
 }
 
 
-public function changePackage($accountUsername, $newPackage)
-{
-    $this->checkLogin();
 
-$url = $this->whmUrl . "/json-api/changepackage?user=" . $accountUsername . "&pkg=" . urlencode($newPackage) . "&api_key=" . $yourApiKey . "&api_user=" . $yourApiUser;
-
-    $ch = curl_init();
-
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-    $response = curl_exec($ch);
-
-    // Check for cURL errors
-    if (curl_errno($ch)) {
-        // Handle error or return an error message
-        return ["error" => curl_error($ch)];
-    }
-
-    // Close the cURL session
-    curl_close($ch);
-
-    // Parse the JSON response into an array
-    $result = json_decode($response, true);
-
-    // Check if the JSON was successfully decoded
-    if ($result === null) {
-        // Handle JSON decoding error or return an error message
-        return ["error" => "Failed to decode JSON response"];
-    }
-
-    // Check the result for success or failure
-    if (isset($result['result']) && $result['result'] == 1) {
-        // Package change was successful
-        return ["success" => "Package changed successfully"];
-    } else {
-        // Package change failed, return error message
-        return ["error" => "Package change failed: " . $result['reason']];
-    }
-}
 
     
     public function logout()
