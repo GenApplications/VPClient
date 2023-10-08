@@ -4,6 +4,23 @@ VistaPanel Users API library
 Originally by @oddmario, maintained by @GenerateApps
 */
 error_reporting(E_ERROR | E_PARSE);
+
+/* Backwards compatibility for PHP 8 functions */
+if(!function_exists('str_contains')) {
+    function str_contains($haystack, $needle)
+    {
+        return '' === $needle || strpos($haystack, $needle) !== false;
+    }
+}
+
+if (!function_exists('str_ends_with')) {
+    function str_ends_with(string $haystack, string $needle)
+    {
+        $needle_len = strlen($needle);
+        return $needle_len === 0 || 0 === substr_compare($haystack, $needle, - $needle_len);
+    }
+}
+
 class VistapanelApi
 {
     private $cpanelUrl = "https://cpanel.byethost.com";
@@ -17,7 +34,7 @@ class VistapanelApi
     {
         $lines = explode("\n", $content);
         foreach ($lines as $line) {
-            if (strpos($line, $str) !== false) {
+            if (str_contains($line, $str)) {
                 return $line;
             }
         }
@@ -58,7 +75,7 @@ class VistapanelApi
         curl_close($ch);
 
         //Check for errors
-        if (strpos($resultUrl, $this->cpanelUrl . "/panel/indexpl.php?option=error") !== false) {
+        if (str_contains($resultUrl, $this->cpanelUrl . "/panel/indexpl.php?option=error")) {
             // Parse the HTML response
             $dom = new DOMDocument();
             libxml_use_internal_errors(true);
@@ -222,10 +239,10 @@ class VistapanelApi
         if (empty($cookies[$this->vistapanelSessionName])) {
             throw new Exception("Unable to login.");
         }
-        if (strpos($login, "document.location.href = 'panel/index_pl_sus.php") !== false) {
+        if (str_contains($login, "Location: /panel/index_pl_sus.php")) {
             throw new Exception("Your account is suspended.");
         }
-        if (strpos($login, "document.location.href = 'panel/indexpl.php") === false) {
+        if (!str_contains($login, "document.location.href = 'panel/indexpl.php")) {
             throw new Exception("Invalid login credentials.");
         }
         $this->loggedIn = true;
@@ -233,7 +250,7 @@ class VistapanelApi
         $this->vistapanelSession = $cookies[$this->vistapanelSessionName];
         $this->cookie ="Cookie: " . $this->vistapanelSessionName . "=" . $this->vistapanelSession;
         $notice = $this->simpleCurl($this->cpanelUrl . "/panel/indexpl.php", false, [], false, [$this->cookie]);
-        if (strpos($notice, "Please click 'I Approve' below to allow us.") !== false) {
+        if (str_contains($notice, "Please click 'I Approve' below to allow us.")) {
             throw new Exception("Please approve or disapprove notifications first.");
         }
         return true;
@@ -308,7 +325,7 @@ class VistapanelApi
         libxml_clear_errors();
         $links = $dom->getElementsByTagName("a");
         foreach ($links as $link) {
-            if (strpos($link->getAttribute("href"), "&db=" . $this->accountUsername . "_" . $database) !== false) {
+            if (str_contains($link->getAttribute("href"), "&db=" . $this->accountUsername . "_" . $database)) {
                 return $link->getAttribute("href");
             }
         }
@@ -633,17 +650,8 @@ class VistapanelApi
 
         Returns every statistics in an array if not provided
         */
-        if (!empty($option)) {
-            $phpversion = phpversion();
-            if (strpos($phpversion, "8.") !== false) {
-                if (str_ends_with($option, ":") === false) {
-                    $option = $option . ":";
-                }
-            } else {
-                if (strpos($option, ":") === false) {
-                    $option = $option . ":";
-                }
-            }
+        if (!empty($option) && !str_ends_with($option, ":")) {
+            $option = $option . ":";
         }
 
         $stats = $this->tableToArray(
@@ -752,7 +760,7 @@ class VistapanelApi
         $anchorTags = $dom->getElementsByTagName('a');
 
         foreach ($anchorTags as $anchorTag) {
-             if (strpos($anchorTag->getAttribute('href'), '?site=' . $source) != false) {
+             if (str_contains($anchorTag->getAttribute('href'), '?site=' . $source)) {
                  return $anchorTag->getAttribute('href');
              }
         }
@@ -868,11 +876,11 @@ class VistapanelApi
 
         foreach ($anchorTags as $anchorTag) {
              if (
-                (strpos($anchorTag->getAttribute('href'), '?site=' . $domain) !== false)
+                str_contains($anchorTag->getAttribute('href'), '?site=' . $domain)
                 &&
-                (strpos($anchorTag->getAttribute('href'), '&data=' . $srv) !== false)
+                str_contains($anchorTag->getAttribute('href'), '&data=' . $srv)
                 &&
-                (strpos($anchorTag->getAttribute('href'), '&aux=' . $priority) !== false)
+                str_contains($anchorTag->getAttribute('href'), '&aux=' . $priority)
              ) {
                  return $anchorTag->getAttribute('href');
              }
@@ -980,9 +988,9 @@ class VistapanelApi
 
         foreach ($anchorTags as $anchorTag) {
              if (
-                (strpos($anchorTag->getAttribute('href'), '?site=' . $domain) !== false)
+                str_contains($anchorTag->getAttribute('href'), '?site=' . $domain)
                 &&
-                (strpos($anchorTag->getAttribute('href'), '&data=' . $data) !== false)
+                str_contains($anchorTag->getAttribute('href'), '&data=' . $data)
              ) {
                  return $anchorTag->getAttribute('href');
              }

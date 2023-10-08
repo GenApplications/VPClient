@@ -120,10 +120,10 @@ Allows iFastNet to send you notifications about account suspensions, also unlock
 
 ```php
 <?php
-require_once 'VistapanelApi.php';
+require_once 'api-client.php';
 
 $vpClient = new VistapanelApi();
-$vpClient->setCpanelUrl('https://example.com');
+$vpClient->setCpanelUrl('https://cpanel.example.com');
 $vpClient->login('username', 'password');
 
 $databases = $vpClient->listDatabases();
@@ -133,6 +133,6 @@ foreach ($databases as $database => $value) {
 
 $vpClient->logout();
 ?>
-
+```
 
 Fork of [VistaPanel PHP API](https://github.com/oddmario/vistapanel-php-api)
