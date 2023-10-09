@@ -239,7 +239,7 @@ class VistapanelApi
         if (empty($cookies[$this->vistapanelSessionName])) {
             throw new Exception("Unable to login.");
         }
-        if (str_contains($login, "Location: /panel/index_pl_sus.php")) {
+        if (str_contains($login, "panel/index_pl_sus.php")) {
             throw new Exception("Your account is suspended.");
         }
         if (!str_contains($login, "document.location.href = 'panel/indexpl.php")) {
