@@ -94,13 +94,13 @@ Uploads an SSL certificate for a domain.
 
 #### `getSSLPrivateKey($domain)`
 
-Get the currently installed SSL Key for a domain
+Get the currently installed SSL key for a domain.
 
 - `$domain` (string): The name of the domain.
 
 #### `getSSLCertificate($domain)`
 
-Get the currently installed SSL Certificate for a domain
+Get the currently installed SSL certificate for a domain.
 
 - `$domain` (string): The name of the domain.
 
