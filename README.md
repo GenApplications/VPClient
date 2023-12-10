@@ -1,6 +1,6 @@
-# GenerateClient
+# VPClient
 
-GenerateClient is a powerful VistaPanel API client library written in PHP. It empowers developers to build custom control panels and seamlessly interact with VistaPanel, a robust web hosting control panel. With GenerateClient, you can manage websites, databases, domains, redirects, SSL certificates, and more, all programmatically using the VistaPanel API (Application Programming Interface).
+VPClient is a powerful VistaPanel API client library written in PHP. It empowers developers to build custom control panels and seamlessly interact with VistaPanel, a robust web hosting control panel. With VPClient, you can manage websites, databases, domains, redirects, SSL certificates, and more, all programmatically using the VistaPanel API (Application Programming Interface).
 
 VistaPanel is a web hosting control panel that allows users to manage their websites, databases, and other aspects of their hosting environment. A VistaPanel API client is a program that can interact with VistaPanel using the VistaPanel API (Application Programming Interface). The API provides a set of methods that can be used to manage various aspects of the hosting environment programmatically.
 
@@ -135,4 +135,4 @@ $vpClient->logout();
 ?>
 ```
 
-Fork of [VistaPanel PHP API](https://github.com/oddmario/vistapanel-php-api)
+Fork of [VistaPanel PHP API](https://github.com/oddmario/vistapanel-php-api).
